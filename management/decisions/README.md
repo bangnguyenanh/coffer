@@ -36,3 +36,5 @@ What becomes easier. What becomes harder. What we'll need to watch.
 |---|---|---|
 | [0000](0000-baseline-operating-principles.md) | Baseline — PM never codes, file board, kebab/ALL_CAPS naming | 2026-01-01 |
 | [0001](0001-surfaces-and-stack.md) | Two surfaces (api + app), Node/Postgres + React, money as integer minor units | 2026-08-22 |
+| [0002](0002-product-name-coffer.md) | The product is called Coffer | 2026-08-22 |
+| [0003](0003-currency-vnd-single-exponent-zero.md) | Single-currency VND; exponent 0, so `1234` is ₫1.234 | 2026-08-22 |

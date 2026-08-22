@@ -30,6 +30,7 @@ There is no backend yet. Before any feature can be ticketed, the ledger needs a 
 Pinned before any client work starts:
 
 - **Amounts** are signed integers in minor units, column type `bigint`, JSON field `amount_minor` as a **number**. No floats anywhere in the path.
+- **Currency is VND with exponent 0** ([ADR 0003](../decisions/0003-currency-vnd-single-exponent-zero.md)) — one integer unit is **one đồng**, so `1234` is ₫1.234. **No divide-by-100 anywhere.** The column stores đồng; do not invent a subunit VND does not have. No currency column, no per-row currency field.
 - **Sign:** outflow negative, inflow positive.
 - **Dates:** `occurred_on` is a calendar `date` (`YYYY-MM-DD`), not a timestamp.
 - **No balance column.** An account's balance is derived from its opening balance plus its transactions. A cached balance column is an explicit non-goal — flag rather than add.

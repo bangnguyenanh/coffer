@@ -30,8 +30,12 @@ you: build the route to the ticket, then return the verification report as data 
 
 ## Verification bar — clear all three before you report done
 1. **Build green** — name the tool (`vite build` / `tsc`) and include the result line.
-2. **Tests green with counts**, where the surface has them.
+2. **Tests green with counts**, where the surface has them. Where a ticket waives tests, the observed-behavior bar below is *raised*, not lowered: demonstrate each rule with real input → real output, and report what you saw rather than what the code should do.
 3. **Behavior observed** — a dev-server smoke and a DOM render check of the changed view, not just a compile.
+   - **Use headless Chrome, not jsdom.** jsdom cannot execute the ESM bundle and leaves `#root` empty, which looks like a render failure that isn't one.
+   - **`--dump-dom` alone is NOT enough** once anything is awaited before mount (a service worker, an async bootstrap). It snapshots at the load event and returns an empty `#root` — a false failure. `--virtual-time-budget` does not fix it and hangs against a service worker. **Drive it over CDP instead:** launch with `--remote-debugging-port=<port>`, poll until a readiness attribute appears (e.g. `[data-status="ready"]`), then read `outerHTML` or capture a screenshot.
+   - **Render your evidence into the DOM.** Put `data-*` attributes on the view for the things a reviewer must confirm — `data-request-url`, `data-result-count`, `data-direction`. This turns "the filter is in the request" from a claim into something greppable in one command. Do it by default on any view whose correctness is about what it fetched.
+   - Check against both the dev server and `vite preview` — the preview run is also what proves a dev-only mock layer is genuinely absent from production.
 
 ## Scope fence
 - Touch only `../projects/app`. Never edit another surface, the hub, or the board.

@@ -9,7 +9,7 @@ A **personal finance manager** — single-user, self-hosted. Track accounts, ent
 Product constraints that shape every ticket:
 
 - **Single user, no multi-tenancy.** There is no organization, no sharing, no roles. Don't build for tenants that don't exist.
-- **Money is never a float.** Amounts are integer minor units (cents) end to end — DB, API, client. A cent of drift is a bug.
+- **Money is never a float.** Amounts are integer minor units end to end — DB, API, client. The currency is **VND at exponent 0**, so one unit is one đồng and `1234` is ₫1.234 — there is no divide-by-100 in this product. A single đồng of drift is a bug.
 - **Data outlives the app.** Postgres + plain SQL migrations; nothing stored in a shape only this codebase can read.
 - **Entry speed is a feature.** Slow transaction entry is what kills a finance tool in week three.
 
@@ -57,9 +57,12 @@ No mobile surface exists yet. If one is added later, drop code into `../projects
 
 Cross-surface, so it lives here rather than in one surface's docs. Both `api` and `app` honor it; changing it is an Owner-gated contract change.
 
-- **Amounts** are integers in **minor units** (cents), never decimals or floats. `1234` is $12.34.
+- **Currency is VND, and VND's exponent is 0** ([ADR 0003](decisions/0003-currency-vnd-single-exponent-zero.md)). Single-currency, forever — no per-row currency field, no conversion, no rate source. Hào and xu are obsolete; **₫1 is the smallest representable amount.**
+- **Amounts** are integers in **minor units**, never decimals or floats. Because the exponent is 0, one integer unit is **one đồng**: `1234` is **₫1.234**, not ₫12.34. There is no divide-by-100 anywhere in this product — importing the "cents" reflex from other currencies is a 100× bug.
+- **The field is `amount_minor`** in DB, API, and client. The name stays ISO-correct at exponent 0 and signals what matters: an integer in the currency's smallest unit.
+- **Display is `1.234 ₫`** — Vietnamese convention, per `Intl.NumberFormat('vi-VN')`. Dot is the **thousands** separator, ₫ is suffixed, and there are **never** decimal digits. So `30.000` means thirty thousand đồng.
+- **Input parsing rejects, never coerces.** A decimal separator, a fractional amount, or malformed input fails with a reason — it is never rounded, truncated, or reinterpreted.
 - **Sign convention:** outflows negative, inflows positive. A transaction's sign is its direction; category or account never implies it.
-- **Currency** is a single workspace-wide code (see CANDIDATES — multi-currency is not decided). Amounts travel with no per-row currency field until that decision is made.
 - **Dates** are calendar dates (`YYYY-MM-DD`) in the Owner's local zone, not timestamps. A transaction happens on a day, not at an instant.
 
 ## Rules of the road

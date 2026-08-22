@@ -66,6 +66,16 @@ The PM auto-persists and starts work only when **all four** signals pass. Any fa
 - **No scope creep inside a ticket.** Mid-execution observations go to a NEW ticket (or an "Out of scope" note), never silently folded in.
 - **Spec changes after a consumer exists are contract changes.** Always ask.
 
+## Decisions must reach the surfaces that obey them
+
+An ADR that changes a **cross-surface contract** is not finished when it is written. Each surface carries its own `documents/`, the owning agent treats those as law, and it is told to **stop on any conflict** — so a hub decision that has not been propagated does not get quietly ignored, it **halts the agent, or worse, gets obeyed in its stale form.**
+
+In the **same change** that accepts such an ADR, the PM updates every surface's `documents/` that states the old rule — and greps for the *examples*, not just the rule. A worked example carrying the old assumption is more dangerous than a stale rule, because it reads as concrete guidance.
+
+Learned from 0002 (ADR 0003, VND exponent 0): the hub said "no divide-by-100", while `app`'s architecture doc still used a USD example instructing the agent to reject `12.345` — a *valid* Vietnamese amount. Caught only because the PM read the surface docs before briefing.
+
+Same rule for a **scoped exception**: when the Owner overrides a surface's law for one track (e.g. "no tests for the prototype"), write the exception into that surface's `documents/` **naming the tickets it covers and when it expires** — do not delete the rule, and do not leave the agent to discover the contradiction mid-build.
+
 ## Epics — group multi-ticket initiatives
 
 When work spans several tickets, add an **Epic entry** to `STATUS.md → ## Epics` listing every child ticket and its lane. One Epic = one initiative; each child names its Epic in its status line. Before opening a sibling to any Epic child, ask whether it's a new phase of the Epic — if so, it goes under the Epic.

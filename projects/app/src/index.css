@@ -1,0 +1,15 @@
+@import 'tailwindcss';
+
+/* Design tokens. Components reference these, never raw hex or magic numbers. */
+@theme {
+  --color-surface: oklch(0.98 0.004 260);
+  --color-surface-raised: oklch(1 0 0);
+  --color-border-subtle: oklch(0.9 0.006 260);
+  --color-ink: oklch(0.25 0.02 260);
+  --color-ink-muted: oklch(0.55 0.015 260);
+  --color-brand: oklch(0.52 0.13 250);
+
+  /* Sign is shown, not assumed — one token per direction, both surfaces agree. */
+  --color-outflow: oklch(0.55 0.19 25);
+  --color-inflow: oklch(0.52 0.14 155);
+}

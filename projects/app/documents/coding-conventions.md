@@ -15,7 +15,8 @@ Law for the `app` surface. On any conflict between a ticket and this file, **sto
 ## Money
 
 - **Never store or compute in decimals.** Amounts are integer minor units in memory, exactly as the API sends them.
-- All conversion goes through the shared formatting/parsing module — a `/ 100` or a `toFixed(2)` outside it is a bug.
+- **Currency is VND, exponent 0** (hub ADR 0003): one integer unit is one đồng. **A `/ 100` or a `toFixed(2)` is a bug anywhere — including inside the formatting module.** There is no subunit to convert to.
+- All display and parsing goes through the shared formatting/parsing module. `.` is the **thousands** separator (`30.000` = thirty thousand); a component that assumes decimal-point semantics is a bug.
 - Display formatting never mutates what gets sent back to the API.
 
 ## Styling
@@ -30,6 +31,7 @@ No hardcoded user-facing copy scattered through components — keep copy where i
 
 - Cover view logic and data wiring; report counts. No merge on red.
 - **Amount parsing and formatting get their own tests** — including negative amounts, zero, and malformed input.
+- **Scoped exception — the prototype track (hub tickets 0002, 0003, 0004).** Owner decision, 2026-08-22: that track ships without automated tests. Closing evidence there is a green build plus **observed dev-server behavior**, demonstrated and reported, not asserted. The rule above stands for everything else, and this exception expires with those three tickets.
 
 ## Contracts
 
