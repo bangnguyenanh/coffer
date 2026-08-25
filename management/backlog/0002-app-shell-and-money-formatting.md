@@ -1,6 +1,6 @@
 # Backlog 0002: Web client foundation — app shell and the money formatting module
 
-**Status:** Open
+**Status:** Closed — 2026-08-23
 **Priority:** High
 **Surfaces:** app
 **Opened:** 2026-08-22
@@ -32,7 +32,7 @@ The formatting module is the client's half of the money contract, and it is the 
 
 <!-- Filled post-execution by the PM from the sub-agent's evidence. -->
 
-**Status: Done — 2026-08-22.** Body frozen; new related work opens a new ticket.
+**Status: Closed — 2026-08-23.** Done 2026-08-22; the Owner's commit gate cleared 2026-08-23 — committed as `ff4e027`, pushed to [bangnguyenanh/coffer](https://github.com/bangnguyenanh/coffer). Body frozen; new related work opens a new ticket.
 
 - **Files changed** (all under `../projects/app/`): `src/lib/money.ts` (the single money module), `src/copy/strings.ts`, `src/App.tsx`, `src/AppShell.tsx`, `src/main.tsx`, `src/routes/ledger/LedgerView.tsx`, `src/index.css`, plus scaffold (`package.json`, `vite.config.ts`, `tsconfig*.json`, `index.html`, `.gitignore`).
 - **Stack:** react 19.2.8 · react-router-dom 7.18.2 · vite 8.2.2 · typescript 7.0.2 · tailwindcss 4.3.3.
