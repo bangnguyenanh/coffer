@@ -1,0 +1,10 @@
+[
+  {"id":"cat_food","name":"Ăn uống"},
+  {"id":"cat_transport","name":"Đi lại"},
+  {"id":"cat_grocery","name":"Chợ & siêu thị"},
+  {"id":"cat_bills","name":"Hóa đơn"},
+  {"id":"cat_coffee","name":"Cà phê"},
+  {"id":"cat_fun","name":"Giải trí"},
+  {"id":"cat_health","name":"Sức khỏe"},
+  {"id":"cat_salary","name":"Lương"}
+]

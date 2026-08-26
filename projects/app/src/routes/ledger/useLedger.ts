@@ -1,22 +1,24 @@
 /**
  * Data wiring for the ledger.
  *
- * The filter values live here as component state, but the FILTERING does not:
- * every filter is turned into a query parameter and sent to the API. There is
- * no array pass over an already-fetched list anywhere in this file — that is
- * the point of hub ticket 0003 phase 3. A filter that never travels drafts
- * nothing about the contract the `api` surface will have to implement.
+ * Filtering happens HERE, over the rows already in React state (hub ticket
+ * 0003, Owner directive 2026-08-25). It used to be sent as query parameters to
+ * a mock server, because the ticket's job was to draft an API contract; that
+ * goal is formally dropped, there is no request, and a filter that travels
+ * nowhere is a filter that runs client-side.
+ *
+ * The MATCHING RULES are unchanged, deliberately — this is the same code the
+ * mock store ran, moved:
+ *   - every filter narrows, and they combine with AND
+ *   - `from`/`to` are inclusive bounds on `occurred_on`
+ *   - `category_id: 'none'` means uncategorized
+ *   - `q` is case- and diacritic-insensitive, so `ca phe` finds `Cà phê`
+ *   - ledger order is `occurred_on` descending, then `id` descending
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import {
-  ApiError,
-  fetchAccounts,
-  fetchCategories,
-  fetchTransactions,
-  transactionsRequestUrl,
-} from '../../api/client';
-import type { Account, Category, Transaction, TransactionQuery } from '../../api/types';
+import { useMemo } from 'react';
+import type { Account, Category, Transaction } from '../../data/types';
+import { useAppData } from '../../state/useAppData';
 
 /** Every field is a string because every field comes from a form control. */
 export interface LedgerFilters {
@@ -36,6 +38,9 @@ export const emptyLedgerFilters: LedgerFilters = {
   q: '',
 };
 
+/** The literal `category_id` value meaning "uncategorized". */
+export const UNCATEGORIZED_FILTER_VALUE = 'none';
+
 export function isFiltered(filters: LedgerFilters): boolean {
   return Object.values(filters).some((value) => value.trim() !== '');
 }
@@ -44,11 +49,12 @@ export function isFiltered(filters: LedgerFilters): boolean {
 const FILTER_KEYS = ['from', 'to', 'account_id', 'category_id', 'q'] as const;
 
 /**
- * Filters live in the page URL, under the SAME parameter names the API takes.
+ * Filters live in the page URL.
  *
- * Two reasons, both deliberate: a filtered ledger is then linkable and survives
- * a reload, and the browser address bar shows exactly what the request will
- * carry — which is the artefact this ticket exists to produce.
+ * Two reasons, both still true without a network layer: a filtered ledger is
+ * linkable and survives a reload, and the address bar shows exactly what is
+ * being matched — which is what makes the filter behaviour observable rather
+ * than something you have to take on trust.
  */
 export function filtersFromSearchParams(params: URLSearchParams): LedgerFilters {
   const read = (key: (typeof FILTER_KEYS)[number]): string => params.get(key) ?? '';
@@ -70,111 +76,88 @@ export function searchParamsFromFilters(filters: LedgerFilters): URLSearchParams
   return params;
 }
 
-/** Form state -> request parameters. An empty control means "do not narrow". */
-function toQuery(filters: LedgerFilters): TransactionQuery {
-  const present = (value: string): string | undefined =>
-    value.trim() === '' ? undefined : value.trim();
-
-  const from = present(filters.from);
-  const to = present(filters.to);
-  const accountId = present(filters.account_id);
-  const categoryId = present(filters.category_id);
-  const q = present(filters.q);
-
-  return {
-    ...(from !== undefined && { from }),
-    ...(to !== undefined && { to }),
-    ...(accountId !== undefined && { account_id: accountId }),
-    ...(categoryId !== undefined && { category_id: categoryId }),
-    ...(q !== undefined && { q }),
-  };
+/**
+ * Fold a Vietnamese string to a comparable form: lower-cased, diacritics
+ * stripped, `đ` folded to `d`. Searching for `ca phe` has to find `Cà phê` or
+ * the search box is decorative.
+ */
+function fold(value: string): string {
+  return value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/đ/g, 'd')
+    .replace(/Đ/g, 'D')
+    .toLowerCase();
 }
 
-/** Typing in the search box should not fire a request per keystroke. */
-const FILTER_DEBOUNCE_MS = 250;
-
-function useDebounced<T>(value: T, delay: number): T {
-  const [settled, setSettled] = useState(value);
-  useEffect(() => {
-    const timer = setTimeout(() => setSettled(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-  return settled;
+/**
+ * Ledger order: `occurred_on` descending (most recent first), then `id`
+ * descending so rows sharing a date have a stable, deterministic order rather
+ * than whatever order they happened to be seeded in.
+ */
+function byLedgerOrder(a: Transaction, b: Transaction): number {
+  if (a.occurred_on !== b.occurred_on) {
+    return a.occurred_on < b.occurred_on ? 1 : -1;
+  }
+  return a.id < b.id ? 1 : -1;
 }
 
-export type LedgerStatus = 'loading' | 'ready' | 'error';
+function matches(txn: Transaction, filters: LedgerFilters, needle: string | null): boolean {
+  const from = filters.from.trim();
+  const to = filters.to.trim();
+  const accountId = filters.account_id.trim();
+  const categoryId = filters.category_id.trim();
+
+  if (from !== '' && txn.occurred_on < from) return false;
+  if (to !== '' && txn.occurred_on > to) return false;
+  if (accountId !== '' && txn.account_id !== accountId) return false;
+  if (categoryId !== '') {
+    if (categoryId === UNCATEGORIZED_FILTER_VALUE) {
+      if (txn.category_id !== null) return false;
+    } else if (txn.category_id !== categoryId) {
+      return false;
+    }
+  }
+  if (needle !== null && !fold(txn.description).includes(needle)) return false;
+  return true;
+}
 
 export interface LedgerData {
-  readonly status: LedgerStatus;
+  /** The matching rows, in ledger order. */
   readonly transactions: readonly Transaction[];
-  /** Total matching the filters server-side, which may exceed the page returned. */
   readonly total: number;
   readonly accounts: readonly Account[];
   readonly categories: readonly Category[];
-  readonly errorMessage: string | null;
-  /** The URL the current filters actually requested. Rendered as evidence. */
-  readonly requestUrl: string;
+  /** The filters currently applied, as a query string. Rendered as evidence. */
+  readonly filterQuery: string;
 }
 
 export function useLedger(filters: LedgerFilters): LedgerData {
-  const debounced = useDebounced(filters, FILTER_DEBOUNCE_MS);
-  const query = useMemo(() => toQuery(debounced), [debounced]);
-  const requestUrl = useMemo(() => transactionsRequestUrl(query), [query]);
+  const { transactions, accounts, categories } = useAppData();
 
-  const [status, setStatus] = useState<LedgerStatus>('loading');
-  const [transactions, setTransactions] = useState<readonly Transaction[]>([]);
-  const [total, setTotal] = useState(0);
-  const [accounts, setAccounts] = useState<readonly Account[]>([]);
-  const [categories, setCategories] = useState<readonly Category[]>([]);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const matched = useMemo(() => {
+    const q = filters.q.trim();
+    const needle = q === '' ? null : fold(q);
+    return transactions.filter((txn) => matches(txn, filters, needle)).sort(byLedgerOrder);
+  }, [transactions, filters]);
 
-  // Accounts and categories are reference data: fetched once, reused by both the
-  // filter controls and the row labels.
-  useEffect(() => {
-    let cancelled = false;
-    void Promise.all([fetchAccounts(), fetchCategories()])
-      .then(([accountsResponse, categoriesResponse]) => {
-        if (cancelled) return;
-        setAccounts(accountsResponse.data);
-        setCategories(categoriesResponse.data);
-      })
-      .catch((error: unknown) => {
-        if (cancelled) return;
-        setErrorMessage(describe(error));
-        setStatus('error');
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Reference data, ordered once for both the filter controls and the row labels.
+  const sortedAccounts = useMemo(
+    () => [...accounts].sort((a, b) => a.name.localeCompare(b.name, 'vi')),
+    [accounts],
+  );
+  const sortedCategories = useMemo(
+    () => [...categories].sort((a, b) => a.name.localeCompare(b.name, 'vi')),
+    [categories],
+  );
 
-  // One request per settled filter set. `requestUrl` is the identity of that
-  // request, so it is the only dependency needed.
-  const latestRequest = useRef('');
-  useEffect(() => {
-    latestRequest.current = requestUrl;
-    setStatus('loading');
-    void fetchTransactions(query)
-      .then((response) => {
-        // A slower earlier request must not overwrite a newer answer.
-        if (latestRequest.current !== requestUrl) return;
-        setTransactions(response.data);
-        setTotal(response.meta.total);
-        setErrorMessage(null);
-        setStatus('ready');
-      })
-      .catch((error: unknown) => {
-        if (latestRequest.current !== requestUrl) return;
-        setErrorMessage(describe(error));
-        setStatus('error');
-      });
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- `query` is the source of `requestUrl`.
-  }, [requestUrl]);
+  const filterQuery = useMemo(() => searchParamsFromFilters(filters).toString(), [filters]);
 
-  return { status, transactions, total, accounts, categories, errorMessage, requestUrl };
-}
-
-function describe(error: unknown): string {
-  if (error instanceof ApiError) return `${error.code}: ${error.message}`;
-  return error instanceof Error ? error.message : String(error);
+  return {
+    transactions: matched,
+    total: matched.length,
+    accounts: sortedAccounts,
+    categories: sortedCategories,
+    filterQuery,
+  };
 }

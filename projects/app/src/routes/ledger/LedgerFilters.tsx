@@ -1,4 +1,4 @@
-import type { Account, Category } from '../../api/types';
+import type { Account, Category } from '../../data/types';
 import { filterCopy } from '../../copy/strings';
 import { emptyLedgerFilters, isFiltered, type LedgerFilters as Filters } from './useLedger';
 
@@ -80,7 +80,7 @@ export function LedgerFilters({ value, onChange, accounts, categories }: LedgerF
             onChange={(event) => set('category_id', event.target.value)}
           >
             <option value="">{filterCopy.allCategories}</option>
-            {/* `none` is the wire value for "uncategorized" — see handlers.ts. */}
+            {/* `none` is the filter value meaning "uncategorized" — see useLedger.ts. */}
             <option value="none">{filterCopy.uncategorizedOnly}</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>{category.name}</option>

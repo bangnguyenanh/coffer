@@ -11,7 +11,7 @@
  * Like money formatting, this is centralized: no component formats a date.
  */
 
-import type { CalendarDate } from '../api/types';
+import type { CalendarDate } from '../data/types';
 
 const CALENDAR_DATE = /^(\d{4})-(\d{2})-(\d{2})$/;
 

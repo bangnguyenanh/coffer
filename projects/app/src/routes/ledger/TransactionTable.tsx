@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { Account, Category, Transaction } from '../../api/types';
+import type { Account, Category, Transaction } from '../../data/types';
 import { ledgerCopy } from '../../copy/strings';
 import { formatCalendarDate } from '../../lib/calendar-date';
 import { AmountCell } from './AmountCell';

@@ -14,9 +14,13 @@ import {
 /**
  * The landing route (hub ticket 0003 phase 3; ticket 0004 later moves it).
  *
- * The view owns layout and the filter state, and nothing else: the data comes
- * from `useLedger`, the amounts are formatted by the money module, and the
- * matching is done by the server.
+ * The view owns layout and the filter state, and nothing else: the rows come
+ * from the app's shared state via `useLedger`, the amounts are formatted by the
+ * money module, and the matching lives in the hook.
+ *
+ * `data-filter-query` and `data-result-count` are on the DOM on purpose: what
+ * this view is FOR is showing the right subset, so the applied filter and the
+ * count it produced are rendered as evidence rather than left to be inferred.
  */
 export function LedgerView() {
   // Filter state is the URL, not component state: one source of truth, and a
@@ -31,13 +35,17 @@ export function LedgerView() {
     setSearchParams(searchParamsFromFilters(next), { replace: true });
   };
 
-  const { status, transactions, total, accounts, categories, errorMessage, requestUrl } =
-    useLedger(filters);
+  const { transactions, total, accounts, categories, filterQuery } = useLedger(filters);
 
   const filtered = isFiltered(filters);
 
   return (
-    <section aria-labelledby="ledger-title" data-request-url={requestUrl} data-status={status}>
+    <section
+      aria-labelledby="ledger-title"
+      data-view="ledger"
+      data-filter-query={filterQuery}
+      data-status="ready"
+    >
       <h1 id="ledger-title" className="text-2xl font-semibold tracking-tight">
         {ledgerCopy.title}
       </h1>
@@ -50,11 +58,7 @@ export function LedgerView() {
         categories={categories}
       />
 
-      {status === 'error' ? (
-        <Placeholder title={ledgerCopy.errorTitle} body={errorMessage ?? ''} />
-      ) : status === 'loading' && transactions.length === 0 ? (
-        <Placeholder title={ledgerCopy.loading} />
-      ) : transactions.length === 0 ? (
+      {transactions.length === 0 ? (
         // Two different nothings: an unused ledger, versus filters that matched
         // none of a ledger that does have transactions.
         <Placeholder
