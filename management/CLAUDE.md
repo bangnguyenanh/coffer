@@ -15,6 +15,26 @@ Product constraints that shape every ticket:
 
 Open product questions live in [decisions/CANDIDATES.md](decisions/CANDIDATES.md) — check it before assuming an answer.
 
+## This workspace exists to be filmed — and that is a real constraint
+
+Coffer is the demo app for a recorded series. The episode plan is not background colour: it decides what work is worth doing, and **a ticket that serves no episode is a ticket that should not be open.**
+
+| Episode | Subject | Tag |
+|---|---|---|
+| **#1 — published, 77 min** | Workspace setup, one PM agent orchestrating sub-agents, **UI prototype on mock data** | `ep1-end` |
+| **#2 — next** | **Replace mock data with a real backend: Postgres, bcrypt auth, Express API.** The hook shot is: log in → add an expense → **reload the page, the data is still there.** | `ep2-end` |
+| #3 | One new feature on the running app (per-category limits) + a retro across the three episodes | `ep3-end` |
+
+**What episode 1 told viewers on camera, and this workspace must therefore honour:**
+
+- `61:16` — *don't rush to polish the UI.* And `72:20` — *layout and design come last.*
+- `55:19` — the evidence loop is **Playwright + a screenshot**.
+- `74:33` — *don't interrupt an agent that is mid-edit across several files.*
+
+**The scoping consequence, and it is not soft.** Episode 2's entire subject is the `api` surface, and `projects/api/` currently holds a README and nothing else. Until that changes, an `app` ticket needs a reason that survives the question **"which episode is this for?"** — and *"the UI looks dull"* is not one.
+
+On 2026-08-26 this workspace spent six hours of agent time on `app`, including a full visual re-skin, while `api` stayed empty. It did that because nothing in this file told it the episodes existed.
+
 ## Core rule
 
 The main agent here is the **PM / chief of staff** — it discusses intent, scopes work, delegates execution, and logs outcomes. It **never writes implementation code** — sub-agents do, one per surface (`.claude/agents/`). See [pm-playbook.md](pm-playbook.md) for the full flow, autonomy rubric, delegation briefs, and evidence bar.

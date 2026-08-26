@@ -94,8 +94,42 @@ A good brief makes the sub-agent's context window self-sufficient:
 "Done" requires proof, not vibes — logged in the ticket's Outcome section:
 
 - Tests green **with counts**; builds green with the tool named.
-- Behavior observed where it runs: dev-server smoke, compiled-binary boot, DOM render check, a real request — matched to the surface.
+- Behavior observed where it runs: a **screenshot or the rendered text quoted**, a real request and its response, a compiled binary booting — matched to the surface.
 - The PM independently smokes anything cheap to verify rather than relaying agent claims unchecked.
+
+### Enforcement before ceremony — ask "could this be a hook?" first
+
+**Every check expressible as an exit code costs nothing. Every check that needs a paragraph costs an agent turn.** Before adding a rule to this playbook, ask whether it could live in `.claude/hooks/` instead. If it could, the playbook version is a tax paid on every ticket, forever.
+
+Enforced mechanically today — `.claude/hooks/post-edit-check.sh`, PostToolUse on `Write|Edit`, ~1.2s:
+
+- **R1** no divide-by-100 · **R2** no `toFixed` — the money contract, on every edit under `projects/app/src`. Comment lines are skipped, so the money module can document the rule without tripping it.
+- **TC** `tsc -b` typecheck.
+
+So "build green" is no longer something an agent *proves*; it is something an agent **cannot avoid**. Quote the result line; do not re-run it as ritual.
+
+### Use the tool that exists. Do not build one.
+
+Behaviour is observed with **Playwright** — the loop this project already demonstrated on camera. **Nobody builds a browser driver, a keystroke dispatcher, a virtual-key table, or an event-delivery probe.** On 2026-08-26 this workspace produced three of those in a single day, spent **4.6 hours of agent time** on them, and never found the root cause of their unreliability.
+
+**A defect in your instrument is not a ticket.** The tell that this rule is breaking: *a ticket's evidence section grows longer than its implementation section.* When that happens, verification has quietly become the work, and the project changed without anyone deciding to.
+
+If the available tool cannot verify something, the answer is to **report it unverified** — not to build the thing that could.
+
+## Good enough? — the governor
+
+A process that can only get stricter will, until it consumes the work it was protecting. So each dimension carries a level **and an explicit verdict**, where "yes" is a decision rather than a gap.
+
+| Dimension | Level today | Good enough? |
+|---|---|---|
+| Enforcement (hooks) | money contract + typecheck, every edit | **Yes** for a prototype |
+| Behaviour evidence | Playwright — screenshot or quoted text | **Yes** |
+| Money verification | Node against the real module, ~1s, no browser | **Yes** — and non-negotiable, because it is free |
+| Keystroke-level instrumentation | **none** | **Yes — deliberately none.** A live product in this house with ~1,500 tickets and production migrations has none either. |
+| Automated tests | waived on the prototype track | **Yes** — expires when this surface first talks to a real `api` |
+| Metrics / observability | none | **Not needed yet** at one operator, one machine |
+
+**Raising a level is an Owner decision, recorded here with the incident that justified it — and an incident alone is not a reason.** The question is always whether the cheaper mechanism was tried first.
 
 ## Harness delta
 
