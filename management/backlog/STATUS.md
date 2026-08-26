@@ -11,7 +11,7 @@
 | ID | Title | Priority | Status | Agents |
 |----|-------|----------|--------|--------|
 | [0001](0001-api-ledger-foundation.md) | API foundation — schema, migrations, and service skeleton | High | Open — not started. **Re-scoped 2026-08-25** by [ADR 0004](../decisions/0004-multi-user-tenant-scoped-from-day-one.md): schema is now tenant-scoped (`users` table, `user_id` on every table, cross-user FKs blocked). Auth mechanics still out of scope | api |
-| [0003](0003-app-ui-prototype-mock-data.md) | Coffer web client — prototype core loop on mock data | High | **In progress** — click-through prototype works: **signup ↔ login** (conventional, multi-account), ledger + filters, on JSON + React state, no network or persistence. `app/documents/` realigned to [ADR 0004](../decisions/0004-multi-user-tenant-scoped-from-day-one.md). **Next: phase 4 (quick entry)** — `addTransaction` is in `src/state/`, unwired | app |
+| [0003](0003-app-ui-prototype-mock-data.md) | Coffer web client — prototype core loop on mock data | High | **In progress** — click-through prototype works: **signup ↔ login** (conventional, multi-account), ledger + filters, on JSON + React state, no network or persistence. `app/documents/` realigned to [ADR 0004](../decisions/0004-multi-user-tenant-scoped-from-day-one.md). **Phase 4 quick-entry done 2026-08-26** (11 keystrokes, no mouse); edit/delete deferred. Next: phase 5 (triage), or [bug 0001](../bugs/0001-ledger-filter-drops-keystrokes.md) first | app |
 | [0004](0004-app-prototype-accounts-transfers-insight.md) | Coffer web client — accounts, transfers, and month insight | High | Open — blocked on 0003 | app |
 
 ## Awaiting Owner — commit / deploy / review / decision

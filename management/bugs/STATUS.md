@@ -8,7 +8,7 @@
 
 | ID | Title | Priority | Status | Agents |
 |----|-------|----------|--------|--------|
-| — | — | — | — | — |
+| [0001](0001-ledger-filter-drops-keystrokes.md) | Ledger filter box drops keystrokes at typing speed | High | Open — defect confirmed, **trigger not pinned** (two observers saw different triggers) | app |
 
 ## Awaiting Owner — commit / deploy / verify
 
