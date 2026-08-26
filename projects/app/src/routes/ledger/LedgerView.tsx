@@ -1,11 +1,15 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { ledgerCopy } from '../../copy/strings';
+import type { Transaction } from '../../data/types';
 import { LedgerFilters } from './LedgerFilters';
+import { QuickEntry } from './QuickEntry';
 import { TransactionTable } from './TransactionTable';
 import {
+  emptyLedgerFilters,
   filtersFromSearchParams,
   isFiltered,
+  matchesFilters,
   searchParamsFromFilters,
   useLedger,
   type LedgerFilters as Filters,
@@ -21,6 +25,18 @@ import {
  * `data-filter-query` and `data-result-count` are on the DOM on purpose: what
  * this view is FOR is showing the right subset, so the applied filter and the
  * count it produced are rendered as evidence rather than left to be inferred.
+ *
+ * **Phase 4 puts quick entry at the TOP of this view, above the filters.** Entry
+ * is what the Owner does dozens of times a day and filtering is what they do
+ * occasionally, so entry gets the first screen position and the initial focus.
+ * It sits inside the ledger rather than behind a modal or a `/new` route
+ * precisely so the row it creates lands in a list that is already on screen.
+ *
+ * **A saved row is never removed by a filter, only hidden by one.** The append
+ * always happens; if the active filter excludes the new row, `QuickEntry` says
+ * so and offers to clear the filters. The alternative — silently widening the
+ * filter on save — throws away the subset the Owner deliberately asked for, and
+ * doing nothing at all makes a saved row look lost. See `onClearFilters` below.
  */
 export function LedgerView() {
   // Filter state is the URL, not component state: one source of truth, and a
@@ -31,9 +47,19 @@ export function LedgerView() {
     () => filtersFromSearchParams(new URLSearchParams(filterKey)),
     [filterKey],
   );
-  const setFilters = (next: Filters): void => {
-    setSearchParams(searchParamsFromFilters(next), { replace: true });
-  };
+  const setFilters = useCallback(
+    (next: Filters): void => {
+      setSearchParams(searchParamsFromFilters(next), { replace: true });
+    },
+    [setSearchParams],
+  );
+
+  // Asked by the entry bar at save time, against the filters in force then.
+  const matchesCurrentFilter = useCallback(
+    (txn: Transaction): boolean => matchesFilters(txn, filters),
+    [filters],
+  );
+  const clearFilters = useCallback((): void => setFilters(emptyLedgerFilters), [setFilters]);
 
   const { transactions, total, accounts, categories, filterQuery } = useLedger(filters);
 
@@ -50,6 +76,15 @@ export function LedgerView() {
         {ledgerCopy.title}
       </h1>
       <p className="mt-1 text-sm text-ink-muted">{ledgerCopy.subtitle}</p>
+
+      <div className="mt-6">
+        <QuickEntry
+          accounts={accounts}
+          categories={categories}
+          matchesCurrentFilter={matchesCurrentFilter}
+          onClearFilters={clearFilters}
+        />
+      </div>
 
       <LedgerFilters
         value={filters}

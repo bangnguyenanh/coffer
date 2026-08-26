@@ -122,6 +122,19 @@ function matches(txn: Transaction, filters: LedgerFilters, needle: string | null
   return true;
 }
 
+/**
+ * Does this row survive the current filters?
+ *
+ * Exported for quick entry (phase 4): a row saved while a filter is on may not
+ * match it, and a new row that simply is not there reads as data loss. The entry
+ * bar asks this question so it can SAY so instead of leaving the Owner to guess.
+ * Same rules as the list — one matcher, so the answer and the list cannot drift.
+ */
+export function matchesFilters(txn: Transaction, filters: LedgerFilters): boolean {
+  const q = filters.q.trim();
+  return matches(txn, filters, q === '' ? null : fold(q));
+}
+
 export interface LedgerData {
   /** The matching rows, in ledger order. */
   readonly transactions: readonly Transaction[];

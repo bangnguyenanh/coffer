@@ -21,9 +21,17 @@
  * was declared single-user. The Owner has asked for conventional sign up +
  * login *"để có thể sau này đẩy lên cloud cho mọi người dùng"*, so the cap is
  * removed here and not merely hidden by routing: `accounts` is a list, sign up
- * appends to it, and login searches it. The conflict with `CLAUDE.md`'s
- * single-user line is escalated to the Owner (hub `decisions/CANDIDATES.md`) —
- * this file just stops asserting the answer.
+ * appends to it, and login searches it.
+ *
+ * **That question is SETTLED — do not re-open it.** The conflict with
+ * `CLAUDE.md`'s old single-user line was escalated and then decided: hub ADR
+ * 0004 (`decisions/0004-multi-user-tenant-scoped-from-day-one.md`, Accepted
+ * 2026-08-25) makes Coffer multi-user, every row scoped to a user from the first
+ * migration, and the single-user constraint is gone from `CLAUDE.md`. A list of
+ * accounts is the product's law here, not a prototype shortcut; collapsing it
+ * back to one owner is a regression. ADR 0004 is a DATA-MODEL decision binding
+ * on `api` and buys this surface nothing at runtime — the no-network,
+ * no-persistence, no-hashing boundary above is untouched by it.
  *
  * Seeded EMPTY, and a reload re-seeds: every account created in a session is
  * gone on refresh. That is deliberate; there is no persistence anywhere in this

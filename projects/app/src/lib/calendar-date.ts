@@ -31,3 +31,24 @@ export function formatCalendarDate(value: CalendarDate): string {
   // Local-time constructor: no zone shift, no off-by-one-day.
   return dateFormatter.format(new Date(Number(year), Number(month) - 1, Number(day)));
 }
+
+/** Is this string a calendar date? The type guard the entry form validates with. */
+export function isCalendarDate(value: string): value is CalendarDate {
+  return CALENDAR_DATE.test(value);
+}
+
+/**
+ * Today, as a calendar date in the Owner's LOCAL zone.
+ *
+ * Deliberately not `new Date().toISOString().slice(0, 10)`. That is UTC, and
+ * Vietnam is UTC+7: before 07:00 local it names YESTERDAY, so the default date
+ * on the entry form would silently be wrong for the first seven hours of every
+ * day — the hours somebody actually logs a breakfast. The parts are read off the
+ * local-time getters instead, for the same reason `formatCalendarDate` refuses
+ * `new Date('2026-08-22')`.
+ */
+export function todayCalendarDate(): CalendarDate {
+  const now = new Date();
+  const pad = (value: number): string => String(value).padStart(2, '0');
+  return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+}

@@ -75,6 +75,69 @@ export const amountErrorCopy: Record<ParseAmountFailure, string> = {
 };
 
 /* ---------------------------------------------------------------------------
+ * Quick entry (hub ticket 0003, phase 4).
+ * ------------------------------------------------------------------------- */
+
+export const quickEntryCopy = {
+  legend: 'Nhập nhanh',
+  /**
+   * The whole keyboard contract, in one line, above the fields. It is here
+   * because a keyboard-first surface that does not SAY it is keyboard-first is
+   * a mouse surface with a shortcut nobody finds.
+   */
+  hint: 'Gõ số tiền rồi Enter. Dấu − là chi, dấu + là thu. Nhấn N để quay lại ô số tiền.',
+
+  direction: {
+    legend: 'Hướng',
+    outflow: 'Chi',
+    inflow: 'Thu',
+    /** Spelled out for screen readers — `Chi`/`Thu` differ by one letter. */
+    outflowLabel: 'Chi — tiền ra khỏi tài khoản',
+    inflowLabel: 'Thu — tiền vào tài khoản',
+    /** `{current}` / `{other}` are substituted with the two labels above. */
+    toggleLabel: 'Hướng giao dịch: {current}. Bấm để đổi sang {other}.',
+  },
+
+  amount: 'Số tiền',
+  amountPlaceholder: '30.000',
+  /** Shown while the typed amount parses, so the stored value is visible before saving. */
+  previewLabel: 'Sẽ lưu:',
+
+  description: 'Mô tả',
+  descriptionPlaceholder: 'ví dụ: Cà phê sáng',
+
+  category: 'Danh mục',
+  /**
+   * The skip option is the DEFAULT and says what skipping means. Wording matches
+   * the ledger chip (`Chưa phân loại`) so the choice made here is recognisable
+   * as the chip that appears on the row.
+   */
+  skipCategory: 'Chưa phân loại (bỏ qua)',
+  categoryHint: 'Bỏ qua được — phân loại sau.',
+
+  account: 'Tài khoản',
+  date: 'Ngày',
+
+  submit: 'Lưu',
+
+  /** `{description}` and `{amount}` are substituted. The amount is already formatted. */
+  saved: 'Đã lưu: {description} · {amount}',
+  /**
+   * The row was saved AND is not on screen, because the active filter excludes
+   * it. Saying nothing here is what would read as data loss.
+   */
+  savedHidden: 'Giao dịch đã được lưu nhưng không khớp bộ lọc đang bật, nên chưa hiện trong danh sách.',
+  savedShow: 'Xóa bộ lọc để xem',
+} as const;
+
+/** One message per non-amount rejection. Amount reasons use `amountErrorCopy`. */
+export const entryErrorCopy = {
+  DESCRIPTION_REQUIRED: 'Nhập mô tả, để sau này còn nhận ra giao dịch này.',
+  DATE_INVALID: 'Ngày phải là một ngày lịch hợp lệ.',
+  ACCOUNT_REQUIRED: 'Chọn tài khoản.',
+} as const;
+
+/* ---------------------------------------------------------------------------
  * The auth surface. Screens only — see `src/auth/AuthProvider.tsx`.
  * ------------------------------------------------------------------------- */
 
