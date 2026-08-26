@@ -10,7 +10,8 @@ Law for the `app` surface. On any conflict between a ticket and this file, **sto
 ## State
 
 - Lift only when shared; avoid a global store for local concerns.
-- Never mirror server data into component state where it can go stale against the API-client cache.
+- **Suspended pending the `api` surface — "never mirror server data into component state where it can go stale against the API-client cache."** The rule is correct and it comes back with a real backend; it has no referent today, because this surface has **no API and no cache** (hub ticket 0003, Owner directive 2026-08-25).
+- **What holds instead, today:** the app's data lives in one shared React context (`src/state/`), seeded from `src/data/*.json` at boot. **No persistence and no network, by design** — a reload re-seeds and loses the session's entries, and that is the accepted trade, not a bug. Read from the context; don't copy it into a component's own state, where it goes stale against the shared one for the same reason the original rule existed.
 
 ## Money
 
@@ -35,4 +36,8 @@ No hardcoded user-facing copy scattered through components — keep copy where i
 
 ## Contracts
 
+**(No API is wired to this surface today — hub ticket 0003, Owner directive 2026-08-25. This rule is the standing contract for when one lands, not a description of the current build; see the boundary section in `architecture/01-overview.md`.)**
+
 The API's response shapes are the `api` agent's contract. Consume them; don't reshape them, don't patch around them client-side. Flag what you need to the PM.
+
+*Last updated: 2026-08-25 (stamp added; content reviewed against hub ADR 0004 — the multi-account auth model is settled law, see the boundary section in `architecture/01-overview.md`) — keep this stamp current in the same edit that changes content.*
