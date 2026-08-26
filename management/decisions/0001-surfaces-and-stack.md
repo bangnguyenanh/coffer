@@ -27,4 +27,4 @@ Money is stored and transported as **signed integer minor units** across both su
 
 - **Easier:** two clean agent lanes that can work in parallel once the API contract is pinned; a data layer that survives the app.
 - **Harder:** every feature crossing both surfaces needs its contract pinned in the ticket *before* parallel work starts, per the playbook.
-- **To watch:** the API is unauthenticated and localhost-only. That is fine on the Owner's machine and unacceptable the moment it is exposed — the moment hosting is on the table, auth becomes an Owner-gated decision and an `ops` gate, not an incidental addition.
+- **To watch:** the API is unauthenticated and localhost-only. *(Still accurate as of 2026-08-25 and not superseded — but [ADR 0004](0004-multi-user-tenant-scoped-from-day-one.md) has since made the product multi-user, so the data model no longer assumes this stays true. The auth work below is now the only thing standing between here and hosting.)* That is fine on the Owner's machine and unacceptable the moment it is exposed — the moment hosting is on the table, auth becomes an Owner-gated decision and an `ops` gate, not an incidental addition.

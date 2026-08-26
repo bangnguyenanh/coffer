@@ -4,11 +4,11 @@
 
 ## What this workspace builds
 
-A **personal finance manager** — single-user, self-hosted. Track accounts, enter and import transactions, categorize them, and see spending over time against intent.
+A **personal finance manager** — self-hosted, and multi-user from the schema up. Track accounts, enter and import transactions, categorize them, and see spending over time against intent.
 
 Product constraints that shape every ticket:
 
-- **Single user, no multi-tenancy.** There is no organization, no sharing, no roles. Don't build for tenants that don't exist.
+- **Every row belongs to a user, from the first migration** ([ADR 0004](decisions/0004-multi-user-tenant-scoped-from-day-one.md)). `user_id` is on every user-data table and every query is scoped by it — an unscoped read or write is a bug, not an optimisation. A partially-applied scope is worse than none: it looks correct until a second user exists, then leaks one person's finances into another's ledger. **What this does *not* license:** no organizations, teams, roles, sharing, invitations, billing, or admin surface — the unit is a person, and each of those is a separate future decision. The schema keeps them possible; nothing builds them yet.
 - **Money is never a float.** Amounts are integer minor units end to end — DB, API, client. The currency is **VND at exponent 0**, so one unit is one đồng and `1234` is ₫1.234 — there is no divide-by-100 in this product. A single đồng of drift is a bug.
 - **Data outlives the app.** Postgres + plain SQL migrations; nothing stored in a shape only this codebase can read.
 - **Entry speed is a feature.** Slow transaction entry is what kills a finance tool in week three.
