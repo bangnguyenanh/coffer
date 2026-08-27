@@ -12,7 +12,17 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * The viewport is 1280 wide because that is the width theme C was drawn at
  * (`management/decisions/assets/0005-theme-c-ledger.html`).
+ *
+ * **`VIEWPORT` is declared once and applied INSIDE the project, after the device
+ * spread — not above it.** `devices['Desktop Chrome']` carries its own
+ * `viewport: { width: 1280, height: 720 }`, and a project's `use` wins over the
+ * top-level `use` wholesale, so the height declared up here was silently
+ * discarded: every screenshot this workspace took before 2026-08-27 is 1280x720,
+ * whatever the config said. A config that lies about what it does is worse than
+ * one that admits it.
  */
+const VIEWPORT = { width: 1280, height: 900 } as const;
+
 export default defineConfig({
   testDir: './e2e',
   timeout: 60_000,
@@ -21,9 +31,13 @@ export default defineConfig({
   reporter: [['list']],
   use: {
     baseURL: 'http://localhost:4173',
-    viewport: { width: 1280, height: 900 },
+    viewport: VIEWPORT,
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    // The device spread FIRST, the viewport after it — otherwise Desktop
+    // Chrome's own 1280x720 wins and the height above is decoration.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], viewport: VIEWPORT } },
+  ],
   webServer: {
     command: 'npm run preview -- --port 4173 --strictPort',
     url: 'http://localhost:4173',

@@ -8,7 +8,7 @@
 
 | ID | Title | Priority | Status | Agents |
 |----|-------|----------|--------|--------|
-| [0001](0001-ledger-filter-drops-keystrokes.md) | Ledger filter box drops keystrokes at typing speed | High | Open — **diagnosed 2026-08-27**. Two defects, one root cause (filter text lives in the URL): a rate-dependent race below ~15ms/char, and a **deterministic space loss** from the `.trim()` in `searchParamsFromFilters` — so a multi-word search cannot be typed at all. Ready to fix | app |
+| — | — | — | — | — |
 
 ## Awaiting Owner — commit / deploy / verify
 
@@ -18,4 +18,6 @@
 
 ## Closed
 
-*(none yet)*
+| ID | Title | Closed | Detail |
+|----|-------|--------|--------|
+| [0001](0001-ledger-filter-drops-keystrokes.md) | Ledger filter box drops keystrokes at typing speed | 2026-08-27 | **Two defects, one root cause** — filter text lived in the URL. A rate-dependent race (total loss at 0 ms/char, gone above 15) and a deterministic space loss from the trim at storage, which made a multi-word search untypeable. Fixed by moving authority to React state and sending a patch instead of the whole filter object — which also fixed the four other controls, where `q` was being clobbered entirely. Six tests red on the pre-fix bundle, green after; 41/41 suite. |

@@ -5,7 +5,16 @@ import { emptyLedgerFilters, isFiltered, type LedgerFilters as Filters } from '.
 
 interface LedgerFiltersProps {
   readonly value: Filters;
-  readonly onChange: (next: Filters) => void;
+  /**
+   * A PATCH of the filters — one key for one control, or every key to reset.
+   *
+   * It is deliberately not a whole `Filters` object. Handing up a complete
+   * object means building it from `value`, and `value` is one render old; the
+   * owner merges this patch inside a functional updater instead, where the base
+   * is always current. That is the structural half of bug 0001's fix — see the
+   * state comment in `LedgerView`.
+   */
+  readonly onChange: (patch: Partial<Filters>) => void;
   readonly accounts: readonly Account[];
   readonly categories: readonly Category[];
 }
@@ -20,12 +29,13 @@ const LABEL_CLASS = 'eyebrow block pb-1 pl-1';
  * only edits the filter value, and the value becomes a query parameter that
  * `useLedger` matches against (see `useLedger`).
  *
- * **Ticket 0005 restyled this file and NOTHING else.** Every control keeps its
- * id, name, value and `onChange`, and `set()` below is untouched: the filter box
- * has an open keystroke-loss race ([bug 0001](../../../../management/bugs/0001-ledger-filter-drops-keystrokes.md))
- * whose fix is a separate ticket, and the way this component derives its next
- * state is exactly the thing that fix will change. Restyling around it must not
- * move it.
+ * **`set()` below is bug 0001's fix, and it is one line.** It used to be
+ * `onChange({ ...value, [key]: next })` — rebuilding all five filters from a
+ * `value` prop that was read back out of asynchronous router state. Every
+ * control did it, so a keystroke computed from a base that had not committed yet
+ * overwrote its predecessor, and the fastest control (the search box) lost text
+ * at typing speed. It now sends ONE key and lets the owner merge it against
+ * current state. Do not reintroduce a spread of `value` here.
  *
  * Theme C draws filters as chips on one line rather than as a boxed fieldset.
  * The eyebrow labels stay VISIBLE — the artboard shows display-only pills, but
@@ -34,7 +44,7 @@ const LABEL_CLASS = 'eyebrow block pb-1 pl-1';
  */
 export function LedgerFilters({ value, onChange, accounts, categories }: LedgerFiltersProps) {
   const set = <K extends keyof Filters>(key: K, next: Filters[K]): void => {
-    onChange({ ...value, [key]: next });
+    onChange({ [key]: next } as Pick<Filters, K>);
   };
 
   return (
@@ -124,6 +134,7 @@ export function LedgerFilters({ value, onChange, accounts, categories }: LedgerF
       {isFiltered(value) && (
         <button
           type="button"
+          data-filter-reset=""
           className="mt-3 text-xs font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
           onClick={() => onChange(emptyLedgerFilters)}
         >

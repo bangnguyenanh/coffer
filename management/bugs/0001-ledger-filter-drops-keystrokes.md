@@ -1,6 +1,6 @@
 # Bug 0001: The ledger's filter box drops keystrokes at typing speed
 
-**Status:** Open — **diagnosed 2026-08-27**  ·  **Severity:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-26
+**Status:** Fixed 2026-08-27  ·  **Severity:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-26
 **Found in:** [Backlog 0003](../backlog/0003-app-ui-prototype-mock-data.md) phase 3, by the `app` agent while building phase 4
 
 ## What happens
@@ -84,6 +84,34 @@ That same round-trip through asynchronous router state is the race in (a): a key
 - Say explicitly which trigger was found, since the two observations to date disagree.
 - The filter must still be diacritic-insensitive afterwards: `ca phe` finds `Cà phê` (9 rows in the current fixtures).
 
-## Outcome
+## Outcome — FIXED 2026-08-27
+
+**Files:** `src/routes/ledger/LedgerView.tsx` (filter state is now `useState`, seeded once from `useSearchParams`; the URL is written behind it with `replace` in an effect; `setFilters` takes a **patch** and merges it in a functional updater), `LedgerFilters.tsx` (`onChange` is `(patch: Partial<Filters>) => void` — `set()` sends one key instead of rebuilding all five), `useLedger.ts` (`searchParamsFromFilters` **no longer trims**; trimming stays where it already was, at the point of *use*), `playwright.config.ts`, new `e2e/bug-0001-filter-keystrokes.spec.ts` (283 lines, 6 tests), `documents/architecture/01-overview.md`.
+
+**The design question, answered:** filter text keeps its URL *presence* and loses its URL *authority*. React state is the source of truth; the URL is a mirror, read exactly once at mount and written thereafter.
+
+**What the app gives up, stated rather than hidden:** a URL change while the ledger is already mounted no longer reaches the controls — browser back/forward across filter states. Nothing observable is lost today, because filter writes are `replace: true` so no filter history entries exist, and every route into the ledger remounts it (`?category_id=none` arriving from `/triage` was verified). The doc carries the warning that matters: **if a same-route link carrying filter params is ever added, do not bolt a URL→state sync onto this.** An incoming query is indistinguishable by content from a stale echo of the view's own write, and adopting the echo is bug 0001 again.
+
+### Before / after — real keystrokes, control in the same run and the same page load
+
+| speed | filter BEFORE | filter AFTER | control |
+|---|---|---|---|
+| 0 ms/char | 1/10 `"z"` | **10/10** | 10/10 |
+| 5 ms/char | lossy, varying | **10/10** | 10/10 |
+| 15–120 ms/char | 10/10 | 10/10 | 10/10 |
+
+`"pho ga"` typed at 0 / 20 / 120 ms: before → `""` or `"phoga"`; **after → `"pho ga"` five times out of five.** `"ca phe"` typed at **0 ms/char** → **9 rows**, so diacritic-insensitivity survives the fix at the speed that used to erase the query entirely. The space is proved load-bearing: `pho ga` → 1 row (`Phở gà`); three real Backspaces → `pho` → 3 rows, because `văn phòng` folds to contain `pho`.
+
+**Trigger, stated as the fix bar demands:** typing **rate** for the race; **trim-at-storage** for the space loss. The reset-button theory is dead — measured before and after a reset click at 0 ms/char, identical, 10/10 both times.
+
+### The other four controls — the defect was real, and is now measured rather than reasoned
+
+Writing `from`, `to`, `account_id`, `category_id`, `q` back to back **before** the fix produced `from=…&to=…&account_id=…&category_id=none` — **`q` clobbered entirely.** After: all five present. It was never only the search box; the other four simply fire rarely enough that a lost event was never attributed. One change — patch instead of whole object — fixes all five.
+
+**Verified:** build `✓ 1971 modules · ✓ 212ms`; Playwright **41/41**, and the six new tests were **6/6 red on the pre-fix bundle** and are 6/6 green now. Quick entry re-measured: **11 keystrokes**. Fixtures intact: 56 / 4, `txn_033` untouched. PM re-ran the build and re-read the diff: the trim is gone from `searchParamsFromFilters` and still present in `matches` / `isFiltered`.
+
+**Viewport, the separate job:** `devices['Desktop Chrome'].viewport` is literally `{width:1280, height:720}`, and a project's `use` replaces the top-level one wholesale — so **every screenshot this workspace took before today was 1280×720, whatever the config claimed.** Now applied after the device spread; new shots verified at 1280×900.
+
+**Harness delta — the first one is the keeper:** *run the fix bar against the pre-fix bundle first.* Six tests red before and green after is what makes them a fix bar rather than six assertions that happened to pass — and it caught a bug in the spec itself (three Backspaces landing in the control box because the previous loop iteration had left focus there). Also: `getByRole(name: /regex/)` against Vietnamese copy is a 60-second timeout waiting to happen — `Xóa` and `Xoá` are different strings, so anything a spec must click gets a `data-*` hook. And: a back-to-back write of every control is a cheap race detector for any state-derived-from-async-router pattern — it turned "the other four probably share it" into a measurement, in one test.
 
 <!-- Filled by the PM from the fixing agent's evidence. -->

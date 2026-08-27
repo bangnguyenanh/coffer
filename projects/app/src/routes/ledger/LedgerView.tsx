@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { MonthBand } from '../../components/MonthBand';
 import { UndoBar } from '../../components/UndoBar';
@@ -94,26 +94,72 @@ type LedgerNotice =
   | { readonly kind: 'updated-hidden'; readonly transaction: Transaction };
 
 export function LedgerView() {
-  // Filter state is the URL, not component state: one source of truth, and a
-  // filtered ledger is linkable.
+  /* -------------------------------------------------------------------------
+   * Filter state — the fix for bug 0001, and the one thing on this view whose
+   * shape is load-bearing.
+   *
+   * It USED to be the URL: `useSearchParams` was read on every render and each
+   * control computed its next state from that read. That is a round trip through
+   * ASYNCHRONOUS router state on every keystroke, and it produced two defects —
+   * a keystroke arriving before the router committed the previous one was
+   * computed from a stale base and overwrote its predecessor (total loss at
+   * 0 ms/char, partial at 5 ms), and the trim on the way out deleted a trailing
+   * space before it could be read back, so a multi-word query could not be typed
+   * at all. Both are the same root cause.
+   *
+   * **Now: React state is the source of truth and the URL is a mirror of it.**
+   * The URL is read exactly ONCE, to seed the state at mount, and written
+   * (replace) whenever the filters change. Nothing reads it back while this view
+   * is mounted, so no keystroke is ever computed from router state.
+   *
+   * What that keeps: a filtered ledger is still linkable and still survives a
+   * reload, and the address bar still shows exactly what is being matched.
+   *
+   * **What it gives up, stated so nobody has to rediscover it:** a URL change
+   * that happens while this view is already MOUNTED no longer reaches the
+   * controls — i.e. browser back/forward across filter states. Nothing observable
+   * is lost today, because filter writes are `replace: true` and therefore push
+   * no history entries to step through, and every route into the ledger remounts
+   * it. **If a same-route link carrying filter params is ever added** (say
+   * `/ledger?category_id=none` from the ledger itself), do NOT bolt a URL→state
+   * sync on here: an incoming query cannot be told apart by content from a stale
+   * echo of this view's own write, and adopting the echo is bug 0001 again. Lift
+   * the filters, or make the link remount.
+   * ---------------------------------------------------------------------- */
   const [searchParams, setSearchParams] = useSearchParams();
-  const filterKey = searchParams.toString();
-  const filters = useMemo(
-    () => filtersFromSearchParams(new URLSearchParams(filterKey)),
-    [filterKey],
-  );
-  const setFilters = useCallback(
-    (next: Filters): void => {
-      setSearchParams(searchParamsFromFilters(next), { replace: true });
-    },
-    [setSearchParams],
-  );
+  const [filters, applyFilters] = useState<Filters>(() => filtersFromSearchParams(searchParams));
+
+  /**
+   * Controls hand up a PATCH, never a whole filter object.
+   *
+   * The patch is merged inside a functional updater, so the base is always the
+   * state React is about to render — never a value captured in a prop one render
+   * ago. This is what stops the five controls from clobbering one another: it
+   * was not only `q`, the other four shared the same derivation and simply fire
+   * rarely enough that nobody noticed. Measured before the fix: setting all five
+   * back to back dropped `q` from the applied filters entirely.
+   */
+  const setFilters = useCallback((patch: Partial<Filters>): void => {
+    applyFilters((previous) => ({ ...previous, ...patch }));
+  }, []);
+
+  // The mirror. Kept behind a ref so the write effect depends on `filters` and
+  // on nothing else — `setSearchParams`'s identity changes with the location,
+  // and an effect that re-ran on it would be writing the URL from the URL again.
+  const setSearchParamsRef = useRef(setSearchParams);
+  useEffect(() => {
+    setSearchParamsRef.current = setSearchParams;
+  });
+  useEffect(() => {
+    setSearchParamsRef.current(searchParamsFromFilters(filters), { replace: true });
+  }, [filters]);
 
   // Asked by the entry bar at save time, against the filters in force then.
   const matchesCurrentFilter = useCallback(
     (txn: Transaction): boolean => matchesFilters(txn, filters),
     [filters],
   );
+  // A full patch: every key is present, so this clears rather than merges.
   const clearFilters = useCallback((): void => setFilters(emptyLedgerFilters), [setFilters]);
 
   const { transactions, total, accounts, categories, filterQuery } = useLedger(filters);

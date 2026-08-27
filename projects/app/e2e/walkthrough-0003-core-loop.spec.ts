@@ -21,7 +21,14 @@ import { expect, test, type Page } from '@playwright/test';
  * atomic state change, and a race structurally cannot show up under it. The one
  * exception is `<input type="date">`, which nothing here types into.
  *
- * ## Step 5 runs straight through bug 0001
+ * ## Step 5 runs straight through bug 0001 — which is now FIXED
+ *
+ * **2026-08-27: bug 0001 is fixed and this file comes back clean.** It is kept
+ * exactly as written, as the independent check: the spec that found the defect
+ * now reports `"pho ga"` intact at every speed and ten of ten characters at
+ * 0 ms/char, without a line of it changing. Its own fix bar lives in
+ * `e2e/bug-0001-filter-keystrokes.spec.ts`, which asserts what this one reports.
+ * The paragraphs below describe the defect as it stood; leave them.
  *
  * *"find it by filter"* means typing into `#filter-q`, which is where
  * [bug 0001](../../../management/bugs/0001-ledger-filter-drops-keystrokes.md)

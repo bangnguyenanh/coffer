@@ -53,12 +53,15 @@ export function isFiltered(filters: LedgerFilters): boolean {
 const FILTER_KEYS = ['from', 'to', 'account_id', 'category_id', 'q'] as const;
 
 /**
- * Filters live in the page URL.
+ * Filters are MIRRORED to the page URL — they no longer live in it.
  *
- * Two reasons, both still true without a network layer: a filtered ledger is
- * linkable and survives a reload, and the address bar shows exactly what is
- * being matched — which is what makes the filter behaviour observable rather
- * than something you have to take on trust.
+ * The two reasons they were put there are still served: a filtered ledger is
+ * linkable and survives a reload (the URL seeds `LedgerView`'s state at mount),
+ * and the address bar shows exactly what is being matched. What changed is the
+ * direction: `LedgerView` owns the filters in React state and writes them out,
+ * and nothing reads them back while the view is mounted. Reading them back on
+ * every keystroke was [bug 0001](../../../../management/bugs/0001-ledger-filter-drops-keystrokes.md)
+ * — see that file and the comment on `LedgerView`'s state.
  */
 export function filtersFromSearchParams(params: URLSearchParams): LedgerFilters {
   const read = (key: (typeof FILTER_KEYS)[number]): string => params.get(key) ?? '';
@@ -71,10 +74,23 @@ export function filtersFromSearchParams(params: URLSearchParams): LedgerFilters 
   };
 }
 
+/**
+ * **Nothing is trimmed here, and that is the fix for half of bug 0001.**
+ *
+ * This used to write `filters[key].trim()`. While the URL was also the source
+ * the input read back from, that trim deleted a trailing space the instant it
+ * was typed — so `"pho "` became `"pho"` and the next key made `"phog"`, and an
+ * interior space could never survive being, for one keystroke, a trailing one.
+ * A multi-word ledger search could not be typed at all.
+ *
+ * Trimming is a question for the point of USE, and that is where it happens:
+ * `matches()`, `matchesFilters()` and `isFiltered()` each trim what they read.
+ * Storage keeps what was typed, so the URL is a faithful mirror of the box.
+ */
 export function searchParamsFromFilters(filters: LedgerFilters): URLSearchParams {
   const params = new URLSearchParams();
   for (const key of FILTER_KEYS) {
-    const value = filters[key].trim();
+    const value = filters[key];
     if (value !== '') params.set(key, value);
   }
   return params;
