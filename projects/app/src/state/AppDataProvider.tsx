@@ -12,14 +12,20 @@
  *
  * **Accounts are state too since ticket 0004 phase 1** — created, edited and
  * archived, never deleted.
+ *
+ * **Categories are state since ticket 0004 phase 3** — created, renamed and
+ * deleted. Deleting one is the only mutator here that writes BOTH lists: the
+ * category goes, and every row filed under it is reassigned to uncategorised
+ * rather than deleted with it.
  */
 
 import { useCallback, useMemo, useRef, useState, type ReactNode } from 'react';
-import type { Account, Transaction } from '../data/types';
+import type { Account, Category, Transaction } from '../data/types';
 import type { Seed } from '../data/seed';
 import {
   AppDataContext,
   type AppData,
+  type CategoryRemoval,
   type TransferInput,
   type TransferPair,
 } from './AppDataContext';
@@ -33,9 +39,9 @@ export function AppDataProvider({
 }) {
   const [transactions, setTransactions] = useState<readonly Transaction[]>(seed.transactions);
   const [accounts, setAccounts] = useState<readonly Account[]>(seed.accounts);
-
-  // Categories are still reference data: category CRUD is ticket 0004 phase 3.
-  const { categories } = seed;
+  // Writable since ticket 0004 phase 3 — created, renamed and deleted. Deleting
+  // one reassigns its rows rather than taking them with it (`removeCategory`).
+  const [categories, setCategories] = useState<readonly Category[]>(seed.categories);
 
   // A counter, not `transactions.length`: two adds in one tick would otherwise
   // mint the same id. `txn_057`, `txn_058`, … continues the fixture numbering.
@@ -44,6 +50,7 @@ export function AppDataProvider({
   const nextId = useRef(seed.transactions.length);
   const nextTransferId = useRef(0);
   const nextAccountId = useRef(seed.accounts.length);
+  const nextCategoryId = useRef(0);
 
   const mintTransactionId = useCallback((): string => {
     nextId.current += 1;
@@ -205,6 +212,68 @@ export function AppDataProvider({
     [accounts],
   );
 
+  const addCategory = useCallback((input: Omit<Category, 'id'>): Category => {
+    nextCategoryId.current += 1;
+    // A minted prefix rather than a slug of the name: the fixture ids read
+    // `cat_food`, and a renamed category must not end up with an id that
+    // contradicts its own name.
+    const created: Category = { ...input, id: `cat_new_${String(nextCategoryId.current)}` };
+    setCategories((current) => [...current, created]);
+    return created;
+  }, []);
+
+  const updateCategory = useCallback(
+    (id: string, input: Omit<Category, 'id'>): Category | null => {
+      // Render scope, not inside the updater — same reason as `updateAccount`.
+      if (!categories.some((category) => category.id === id)) return null;
+      const updated: Category = { ...input, id };
+      setCategories((current) =>
+        current.map((category) => (category.id === id ? updated : category)),
+      );
+      return updated;
+    },
+    [categories],
+  );
+
+  /**
+   * Delete a category; its transactions become uncategorised.
+   *
+   * The two `setState` calls are one React update — and the ORDER of the reads
+   * matters more than the order of the writes: both the removed category and the
+   * rows that pointed at it are read from render scope, so the value handed to
+   * the caller for undo is never the `null` a functional updater would sometimes
+   * return.
+   */
+  const removeCategory = useCallback(
+    (id: string): CategoryRemoval | null => {
+      const target = categories.find((category) => category.id === id) ?? null;
+      if (target === null) return null;
+
+      const reassigned = transactions
+        .filter((txn) => txn.category_id === id)
+        .map((txn) => ({ id: txn.id, category_id: txn.category_id }));
+
+      setCategories((current) => current.filter((category) => category.id !== id));
+      // Reassign, never cascade-delete. Losing ledger history to a category
+      // cleanup would be unrecoverable; these rows go to the triage inbox.
+      setTransactions((current) =>
+        current.map((txn) => (txn.category_id === id ? { ...txn, category_id: null } : txn)),
+      );
+
+      return { category: target, reassigned };
+    },
+    [categories, transactions],
+  );
+
+  const restoreCategories = useCallback((restored: readonly Category[]): void => {
+    if (restored.length === 0) return;
+    setCategories((current) => {
+      const present = new Set(current.map((category) => category.id));
+      const missing = restored.filter((category) => !present.has(category.id));
+      return missing.length === 0 ? current : [...current, ...missing];
+    });
+  }, []);
+
   const value = useMemo<AppData>(
     () => ({
       transactions,
@@ -219,6 +288,10 @@ export function AppDataProvider({
       addAccount,
       updateAccount,
       setAccountArchived,
+      addCategory,
+      updateCategory,
+      removeCategory,
+      restoreCategories,
     }),
     [
       transactions,
@@ -233,6 +306,10 @@ export function AppDataProvider({
       addAccount,
       updateAccount,
       setAccountArchived,
+      addCategory,
+      updateCategory,
+      removeCategory,
+      restoreCategories,
     ],
   );
 

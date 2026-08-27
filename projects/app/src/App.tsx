@@ -3,6 +3,7 @@ import { AppShell } from './AppShell';
 import { AuthGate } from './auth/AuthGate';
 import { AccountDetailView } from './routes/accounts/AccountDetailView';
 import { AccountsView } from './routes/accounts/AccountsView';
+import { CategoriesView } from './routes/categories/CategoriesView';
 import { LedgerView } from './routes/ledger/LedgerView';
 import { TriageView } from './routes/triage/TriageView';
 import { LoginView } from './routes/login/LoginView';
@@ -29,6 +30,13 @@ import { SignupView } from './routes/signup/SignupView';
  *                     tab stop to the measured 11-keystroke entry path, which
  *                     is a regression the design system does not permit.
  *   /accounts/:id     one account, its derived balance, and its own ledger.
+ *   /categories       flat category CRUD — hub ticket 0004 phase 3. It is its
+ *                     own route rather than a panel on the ledger because it is
+ *                     reference-data maintenance, done rarely, and it must not
+ *                     share a screen with the measured 11-keystroke entry path.
+ *                     Deleting a category REASSIGNS its rows to uncategorised
+ *                     (never cascade-deletes them), so the rows it touches land
+ *                     in /triage — which is why the two are siblings.
  *   /triage           the uncategorised inbox (phase 5). It is a ROUTE and not
  *                     a filtered ledger because it is a different job with a
  *                     different keyboard model: the ledger reads and corrects
@@ -65,6 +73,7 @@ export function App() {
           <Route index element={<LedgerView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/accounts/:accountId" element={<AccountDetailView />} />
+          <Route path="/categories" element={<CategoriesView />} />
           <Route path="/triage" element={<TriageView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>

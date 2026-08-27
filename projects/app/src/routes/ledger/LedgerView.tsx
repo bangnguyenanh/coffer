@@ -6,6 +6,7 @@ import type { Transaction } from '../../data/types';
 import { formatAmount } from '../../lib/money';
 import { useAppData } from '../../state/useAppData';
 import { LedgerFilters } from './LedgerFilters';
+import { MonthBand } from './MonthBand';
 import { QuickEntry } from './QuickEntry';
 import { TransactionList } from './TransactionList';
 import {
@@ -62,10 +63,23 @@ import {
  * **There is no confirmation dialog anywhere in this flow**, and the reasoning
  * is written out in `UndoBar`.
  *
- * **Theme C (ticket 0005) does NOT add the month band.** The summary strip in
- * the artboard — spent / earned / difference / allocation bar — is feature work
- * belonging to ticket 0004, and this ticket builds the tokens it will use, not
- * the band itself.
+ * ## The month band, ticket 0004 phase 4
+ *
+ * The artboard's summary strip — spent / earned / difference / allocation bar —
+ * is built and it sits at the TOP of this view, where the artboard puts it. Two
+ * things about that placement are deliberate:
+ *
+ * - **It does not shift the 11-keystroke entry path.** The amount box carries
+ *   `autoFocus`, so the caret still starts there on mount however much chrome
+ *   sits above it, and Tab from the amount box still reaches the description
+ *   next — nothing was inserted INTO the tab order between them. Re-measured.
+ * - **The band ignores the ledger's filters, on purpose.** It is a MONTH
+ *   summary. A band that quietly re-scoped itself to whatever subset is filtered
+ *   would be a different number under the same label, which is the one thing a
+ *   summary may not be.
+ *
+ * Phase 5 moves it to the dashboard; until that second consumer exists it stays
+ * a `routes/ledger/` component (documents/coding-conventions.md, promotion rule).
  */
 
 /**
@@ -152,12 +166,16 @@ export function LedgerView() {
       data-notice={notice?.kind ?? ''}
       data-status="ready"
     >
-      <QuickEntry
-        accounts={activeAccounts}
+      <MonthBand />
+
+      <div className="mt-5">
+        <QuickEntry
+          accounts={activeAccounts}
         categories={categories}
-        matchesCurrentFilter={matchesCurrentFilter}
-        onClearFilters={clearFilters}
-      />
+          matchesCurrentFilter={matchesCurrentFilter}
+          onClearFilters={clearFilters}
+        />
+      </div>
 
       <div className="mt-7 flex items-baseline gap-3.5">
         <h1

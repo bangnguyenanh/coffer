@@ -1,6 +1,6 @@
 # Backlog 0004: Coffer web client — accounts, transfers, and month insight
 
-**Status:** In progress — phases 1–2 done 2026-08-27  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-22
+**Status:** In progress — phases 1–4 done 2026-08-27, phase 5 next  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-22
 **Epic:** Foundation — first usable expense tracker
 
 ## Context / problem
@@ -99,6 +99,44 @@ Inherits the money contract from CLAUDE.md and the field names pinned in 0001:
 
   **Build `✓ 179ms`, Playwright 22/22 (8 new, 14 pre-existing, no regressions), Node money 25/25.** PM re-ran the build and the fixture counts.
 
+- **Phase 3 — DONE 2026-08-27.** Categories, flat, CRUD.
+
+  **Files:** new `src/routes/categories/{CategoriesView.tsx,category-form.ts}`, `e2e/phase3-categories.spec.ts`; changed `src/state/AppData*` (categories became state, `CategoryRemoval` + 4 mutators), `src/App.tsx`, `src/AppShell.tsx`, `src/copy/strings.ts`.
+
+  **Delete reassigns, never cascades** — deleting `Chợ & siêu thị` (7 rows):
+
+  ```
+  BEFORE {ledgerRows:56, inbox:4,  categories:8}
+  AFTER  {ledgerRows:56, inbox:11, categories:7}
+  ```
+
+  Ledger row count identical; the 7 rows are in `/triage`, where they can be re-filed. Undo restores the category, its rows, its position, its digit key and its swatch — compared byte-for-byte. Blank name and `cà phê` vs `Cà phê` both refused with a reason.
+
+  **What a reorder does to a colour and a digit key — asked for explicitly, and answered.** Creating `Bảo hiểm` moved **7 of 8** existing categories: `Cà phê` key 2→3 and swatch 2→3, `Đi lại` key 4→5 and swatch 4→1, and so on. Renaming `Ăn uống` → `Đồ ăn` moved it index 0→3, key 1→4, swatch 1→4, and the triage legend agreed.
+
+  **The agent's call: acceptable, no fix — and the reasoning is where the risk actually is.** The ramp carries **no identity** (nothing reads colour as *which* category, and uncategorised is dashed so it can never be mistaken for a ramp step), so a shifted colour is never a lie. A digit key is only dangerous *while it is under a finger*, and that cannot happen mid-edit: `/categories` and `/triage` are different routes and the legend is re-read on arrival. **What would not be acceptable is hiding it** — so `/categories` renders the swatch and the digit on every row, on the one screen where the reordering is caused. Design-system rule 12. Stabilising them means storing a colour or a shortcut on the data, which is a data-model change and Owner-gated.
+
+- **Phase 4 — DONE 2026-08-27. Theme C's month band is built.**
+
+  **Files:** new `src/lib/month-summary.ts`, `src/routes/ledger/MonthBand.tsx`, `e2e/phase4-month-band.spec.ts`; changed `src/lib/calendar-date.ts` (`MonthKey`, `monthKeyOf`, `currentMonthKey`), `LedgerView.tsx`, `src/index.css` (`uncat-hatch`), `src/copy/strings.ts`.
+
+  **The numbers reconcile — PM re-derived every one of these straight from `transactions.json`, independently of the app:**
+
+  ```
+  August 2026:  in 25.200.000 ₫ · out -7.460.000 ₫ · net 17.740.000 ₫ · 17 rows
+  net === in + out                                        ✓
+  8 segments sum to -7.460.000 === month out              ✓  (no "Khác" bucket, no rounding)
+  uncategorised segment -150.000 === the month's uncategorised rows ✓
+  ```
+
+  **Transfers excluded from every month-scoped figure.** A ₫500.000 transfer created during the run, dated *inside* the displayed month: `data-month-transfer-legs` 0→2 is **the only number that moves**. Every legend slice compared `toEqual` — identical. Both legs store `category_id: null` and neither reached the uncategorised segment. That is the fifth consumer the exclusion rule tried to leak into, caught.
+
+  **The acceptance test lands, and the sentence is chosen from the data rather than asserted.** August is 2.0 % unfiled → a neutral note. One step back to **July 2026** — where ₫1,25bn of a ₫1,258bn month has no category, **99.3 %**, PM-verified — and the band renders the canvas line verbatim: *"Hơn một nửa chi tiêu tháng này chưa biết đi đâu."* with `Phân loại 4 giao dịch →` beside it, linking into the inbox. `e2e-shots/month-band-over-half-1280.png` is the frame that makes the case: the hatched uncategorised segment swallowing the bar.
+
+  **Money:** every string through `money.ts`, U+00A0 asserted explicitly, **no `+` on the positive net**, no decimal digit. **Quick entry still 11 keystrokes**, re-measured with the band above it.
+
+  **Build `✓ 229ms`, Playwright 31/31 (9 new, 22 pre-existing, no regressions), Node money 23/23, Node month arithmetic 16/16.** PM re-ran the build and re-derived the August and July figures from the fixtures.
+
 ### Decisions the ticket did not specify
 
 1. **Transfer entry lives on `/accounts`, not on the ledger row.** A source/destination mode on quick entry would add a tab stop to the measured 11-keystroke path — a regression that needs the Owner. On the accounts screen it also sits beside the two balances it moves, which is why the proof fits in one frame.
@@ -106,6 +144,14 @@ Inherits the money contract from CLAUDE.md and the field names pinned in 0001:
 3. **Fixture opening balances were raised** (`acc_vcb` 18.5m → 1.32bn, `acc_cash` 2m → 3.5m, `acc_momo` 850k → 2m). Nothing had ever read `opening_balance_minor` before this phase, and the moment balances derived, **three of four accounts came out negative** — `txn_033` alone is a ₫1.25bn apartment deposit. **No row was added, edited or removed: the 56 / 4 / 0 / 9 counts are intact** (PM-verified). `acc_vcb`'s ten-digit balance now stress-tests the balance column the way `txn_033` stress-tests the amount column. One line to revert.
 4. **A spending total is rendered on `/accounts`** — over all transactions, no period, no in/out/net, no allocation bar, so phase 4 still owns the month band entirely. Without it the exclusion claim has no visible number.
 5. **No fixture transfer rows** — seeding two would change the counts closed phases quote, and a demonstration must create its own transfer to have a *before*.
+
+**From phases 3–4:**
+
+6. **A month stepper (prev / next) is on the band.** Not in the ticket. Without one the band can only show whatever month the clock is in — which makes it unverifiable and makes four fifths of the fixtures unreachable, **including July, the only month where the canvas's acceptance line is true.**
+7. **Three deliberate departures from the artboard**, each in service of a design-system rule the artboard predates: **no `+`** on net (Owner-gated); the headline spend and legend amounts keep their **real sign and outflow colour** through `AmountCell` rather than being unsigned magnitudes in muted ink, because sign→colour lives in one component and the accounts screen set that precedent in phase 2; and **no "Khác" bucket**, which is what lets "the segments sum to the month's out" be exact rather than approximate.
+8. **The band ignores the ledger's filters.** A month summary that silently re-scoped to a filtered subset would be a different number under the same label.
+9. **Duplicate category names refused case-insensitively, diacritics preserved** — deliberately *not* the ledger search's diacritic-folding: a searcher is guessing, an author is not, and in Vietnamese the diacritics are the word.
+10. **The fixtures' month spread is now load-bearing**, recorded in `src/data/README.md`: re-dating or categorising `txn_033` silently removes the only month where the band's acceptance line fires.
 
 ### For `api` — two fields ticket 0001's schema does not have
 
@@ -122,3 +168,10 @@ Inherits the money contract from CLAUDE.md and the field names pinned in 0001:
 - Phase 4: `<files, evidence>`
 - Phase 5: `<files, evidence>`
 - Harness delta: `<what this taught the system, or "None">`
+
+### Harness delta from phases 3–4 — acted on, with one correction
+
+- **The stale-bundle rule is now unconditional**, folded into `.claude/agents/app.md`: *always* rebuild before Playwright. Under bypass-permissions every edit goes through Bash, so no `Write|Edit` hook fires and nothing rebuilds on the agent's behalf.
+- **One claim in the report is wrong and is corrected here rather than inherited.** The agent wrote that under this mode *"the turn-end typecheck never runs"*. It does: `.claude/hooks/turn-end-check.sh` (added in `88e55a7`) fires on `Stop`/`SubagentStop` and reads `git status`, not tool input, precisely so Bash edits cannot dodge it — PM re-ran it after this phase, exit 0. What the hook does **not** do is rebuild the preview server's bundle, which is the real gap and the reason the rule above is worth stating.
+- **`node --experimental-strip-types` reaches one level above `money.ts` cheaply** — flat-copy the module plus its value-import dependencies and one `sed` to add `.ts` extensions; `import type` specifiers are erased and need no rewrite. That proved the month arithmetic in ~1s, leaving the browser spec to prove only that it *renders*.
+- **A screenshot caught a defect no assertion would have** — the categories header labels drifted off their columns because an `auto` grid track sized differently in a header cell holding nothing than in a row cell holding two buttons. Every attribute assertion passed. Reading the image, not just the log, is what found it.

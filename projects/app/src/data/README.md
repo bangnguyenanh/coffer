@@ -103,6 +103,23 @@ Counts worth keeping stable, because the observed-behavior checks quote them:
 **9 matching the search `ca phe`** (diacritic-insensitive — it has to match
 `Cà phê`).
 
+**And, since ticket 0004 phase 4, the SPREAD ACROSS MONTHS is load-bearing too.**
+The month band reads one month at a time, so a fixture set that all landed in one
+month would make three quarters of the band untestable:
+
+| month | rows | outflow | uncategorized outflow |
+|---|---|---|---|
+| `2026-05` | 7 | −1.955.000 | — |
+| `2026-06` | 16 | −10.280.000 | 21.4 % |
+| `2026-07` | 16 | −1.258.364.000 | **99.3 %** (`txn_033`) |
+| `2026-08` | 17 | −7.460.000 | 2.0 % |
+
+**July is the month the band's acceptance test runs against.** The canvas note —
+*"Hơn một nửa chi tiêu tháng này chưa biết đi đâu"* — is a data-driven state, and
+`txn_033` is the row that makes it true in a real month rather than a mocked one.
+Re-dating or categorising `txn_033` silently removes the only month on this
+surface where that line fires.
+
 ## What is deliberately absent
 
 - **No transfer rows.** `transfer_id` exists on the type (see above) and the
@@ -112,7 +129,11 @@ Counts worth keeping stable, because the observed-behavior checks quote them:
   model is still provisional. A demonstration creates its own transfer, which is
   also the only way to observe balances *before and after* one.
 - **No nested categories.** Categories are flat — nesting is unresolved in
-  `decisions/CANDIDATES.md`.
+  `decisions/CANDIDATES.md`. Since ticket 0004 phase 3 categories are *writable
+  at runtime* (create / rename / delete on `/categories`), and this file is still
+  where they are SEEDED from — a reload re-seeds these eight. Deleting one in the
+  app reassigns its rows to uncategorised; it does not edit this file, and no
+  fixture row's `category_id` changed for that phase.
 - **No account balances.** Derived, never stored.
 - **No user / credential row.** Accounts are created by the sign up screen into
   React state at runtime (hub ticket 0003 phase 2b), so a fresh load starts with

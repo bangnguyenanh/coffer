@@ -62,6 +62,14 @@
   /* ---- Category ramp — ONE hue, four steps -------------------------------
    * Uncategorised is deliberately NOT on this ramp: it is a dashed swatch, so
    * "no category" can never be mistaken for a category. */
+  /* Uncategorised in the month band's allocation bar (ticket 0004 phase 4).
+     A HATCH, not a ramp step: the bar's first segment has to be legible as a
+     state rather than as a fifth category, at 12px tall and at any width.
+     Measured off the artboard's `repeating-linear-gradient`, not re-eyeballed. */
+  --uncat-hatch-a: oklch(0.88 0.02 72);
+  --uncat-hatch-b: oklch(0.93 0.014 78);
+  --uncat-swatch: oklch(0.91 0.018 75);     /* the legend chip's ground */
+
   --category-1: oklch(0.55 0.11 72);
   --category-2: oklch(0.65 0.09 72);
   --category-3: oklch(0.74 0.07 72);
@@ -144,6 +152,7 @@
   --color-field-line-soft: var(--field-line-soft);
   --color-dash: var(--dash);
   --color-dash-strong: var(--dash-strong);
+  --color-uncat-swatch: var(--uncat-swatch);
   --color-category-1: var(--category-1);
   --color-category-2: var(--category-2);
   --color-category-3: var(--category-3);
@@ -181,6 +190,17 @@
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: var(--ink-muted);
+}
+
+/* The uncategorised segment of the month band's allocation bar. It is a utility
+   rather than an inline style because a colour literal outside this file is a
+   bug (documents/design-system.md §3.5) — and a gradient is three of them. */
+@utility uncat-hatch {
+  background: repeating-linear-gradient(
+    135deg,
+    var(--uncat-hatch-a) 0 5px,
+    var(--uncat-hatch-b) 5px 10px
+  );
 }
 
 @layer base {

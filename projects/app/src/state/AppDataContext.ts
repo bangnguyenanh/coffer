@@ -47,6 +47,23 @@ export interface TransferInput {
   readonly description: string;
 }
 
+/**
+ * What a category deletion actually did (ticket 0004 phase 3).
+ *
+ * **Deleting a category never deletes a transaction.** The rows that were filed
+ * under it are reassigned to uncategorised, so ledger history survives a
+ * category cleanup that would otherwise be unrecoverable — and they land in the
+ * triage inbox, where they can be re-filed.
+ *
+ * `reassigned` is the PREVIOUS `category_id` of every row that moved, in exactly
+ * the shape `assignCategories` takes. That is what makes the undo exact rather
+ * than approximate: the caller hands it straight back.
+ */
+export interface CategoryRemoval {
+  readonly category: Category;
+  readonly reassigned: readonly { readonly id: string; readonly category_id: string | null }[];
+}
+
 /** Both legs of a created transfer, in the order source → destination. */
 export interface TransferPair {
   readonly transfer_id: string;
@@ -150,6 +167,42 @@ export interface AppData {
    * transactions cannot be removed without orphaning history.
    */
   readonly setAccountArchived: (id: string, archived: boolean) => Account | null;
+
+  /* ---- Categories, writable since ticket 0004 phase 3 --------------------- */
+
+  /**
+   * Create a flat category. The id is minted here.
+   *
+   * **Flat.** Nesting is an unresolved question in the hub's
+   * `decisions/CANDIDATES.md` and this ticket does not settle it, so there is no
+   * parent field to forget to populate.
+   */
+  readonly addCategory: (input: Omit<Category, 'id'>) => Category;
+
+  /** Rename a category, keeping its id. Returns it as stored, or `null`. */
+  readonly updateCategory: (id: string, input: Omit<Category, 'id'>) => Category | null;
+
+  /**
+   * Delete a category and REASSIGN its transactions to uncategorised — one
+   * update, both lists.
+   *
+   * The invariant lives here and not in the caller for the same reason the
+   * transfer pair does: a caller that has to remember "and also clear the rows"
+   * is a caller that will one day forget, and forgetting leaves the ledger
+   * pointing at a category id that no longer exists — rows that render as
+   * uncategorised in one view and blank in another, with no way to fix them.
+   *
+   * It returns everything needed to put it back: the category itself and the
+   * previous `category_id` of every row that moved.
+   */
+  readonly removeCategory: (id: string) => CategoryRemoval | null;
+
+  /**
+   * Put deleted categories back, ids and all. Not an add: no new id is minted,
+   * so the restored category is the one the reassigned rows point back at.
+   * Ordering needs no help — every list is sorted by name on render.
+   */
+  readonly restoreCategories: (categories: readonly Category[]) => void;
 }
 
 export const AppDataContext = createContext<AppData | null>(null);

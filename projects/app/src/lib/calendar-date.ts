@@ -76,3 +76,56 @@ export function todayCalendarDate(): CalendarDate {
   const pad = (value: number): string => String(value).padStart(2, '0');
   return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
 }
+
+/* ---------------------------------------------------------------------------
+ * Months — the month band's half of the date contract (hub ticket 0004 phase 4).
+ * ------------------------------------------------------------------------- */
+
+/**
+ * A calendar MONTH, `YYYY-MM`.
+ *
+ * The same reasoning as `CalendarDate`: a month is a label, not an instant, and
+ * it is never a `Date`. Making it a string keeps `occurred_on.slice(0, 7)`
+ * correct by construction — no zone, no rollover, no month that is 31 days long
+ * in one place and 30 in another.
+ */
+export type MonthKey = string;
+
+const MONTH_KEY = /^(\d{4})-(\d{2})$/;
+
+/** Is this string a month key? */
+export function isMonthKey(value: string): value is MonthKey {
+  return MONTH_KEY.test(value);
+}
+
+/** The month a calendar date falls in. `2026-08-19` -> `2026-08`. */
+export function monthKeyOf(value: CalendarDate): MonthKey {
+  const match = CALENDAR_DATE.exec(value);
+  if (match === null) {
+    throw new TypeError(`Expected a calendar date in YYYY-MM-DD form; received ${value}`);
+  }
+  return value.slice(0, 7);
+}
+
+/** This month, in the Owner's LOCAL zone — same reasoning as `todayCalendarDate`. */
+export function currentMonthKey(): MonthKey {
+  return monthKeyOf(todayCalendarDate());
+}
+
+/**
+ * The year and the (1-based, un-padded) month of a month key, as strings.
+ *
+ * It returns PARTS rather than a formatted label because the label itself is
+ * copy — `Tháng {month} · {year}` lives in `src/copy/strings.ts` like every
+ * other user-facing string, and a module in `lib/` does not get to type
+ * Vietnamese. Same division of labour as the amount modules: this file knows
+ * what a month IS, `strings.ts` knows what it is CALLED.
+ */
+export function monthKeyParts(month: MonthKey): { readonly year: string; readonly month: string } {
+  const match = MONTH_KEY.exec(month);
+  if (match === null) {
+    throw new TypeError(`Expected a month in YYYY-MM form; received ${month}`);
+  }
+  const [, year, monthPart] = match;
+  return { year: year ?? '', month: String(Number(monthPart)) };
+}

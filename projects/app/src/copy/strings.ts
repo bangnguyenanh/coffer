@@ -14,6 +14,8 @@ export const appCopy = {
     ledger: 'Sổ cái',
     /** Balances, transfers, and archiving — hub ticket 0004 phases 1–2. */
     accounts: 'Tài khoản',
+    /** Flat category CRUD — hub ticket 0004 phase 3. */
+    categories: 'Danh mục',
     /**
      * The count chip in the pill nav.
      *
@@ -466,4 +468,131 @@ export const transferErrorCopy = {
   AMOUNT_ZERO: 'Số tiền chuyển phải lớn hơn 0.',
   ACCOUNT_REQUIRED: 'Chọn tài khoản.',
   DATE_INVALID: 'Ngày phải là một ngày lịch hợp lệ.',
+} as const;
+
+/* ---------------------------------------------------------------------------
+ * Categories (hub ticket 0004, phase 3) — flat, and deleting one keeps its rows.
+ * ------------------------------------------------------------------------- */
+
+export const categoriesCopy = {
+  title: 'Danh mục',
+  /**
+   * The subtitle states the two rules the screen is built on, because both are
+   * surprising if you meet them by accident: deleting keeps the transactions,
+   * and the list is ordered by name — which is what the swatch and the triage
+   * digit are derived from, so renaming moves both.
+   */
+  subtitle:
+    'Danh mục phẳng, không có danh mục con. Xóa một danh mục thì giao dịch của nó chuyển về Chưa phân loại, không bị xóa theo.',
+  /** `{count}` is substituted. Rendered in every state, including zero. */
+  count: '{count} danh mục',
+
+  /** The column headings over the list. */
+  colName: 'Tên',
+  colKey: 'Phím',
+  colUsage: 'Giao dịch',
+
+  /**
+   * The order note above the list. It is functional copy, not decoration: the
+   * swatch and the digit key are both positions in this list, so a rename or a
+   * create moves them, and the screen that causes it is the screen that has to
+   * say so.
+   */
+  orderNote:
+    'Xếp theo tên. Màu và phím tắt 1–9 lấy theo thứ tự này, nên đổi tên hoặc thêm danh mục sẽ xếp lại cả hai.',
+  /** Categories past the ninth get no digit. Same `—` the triage legend renders. */
+  noKey: '—',
+  /** `{count}` — how many transactions are filed under a category right now. */
+  usage: '{count} giao dịch',
+
+  add: 'Thêm danh mục',
+  addLegend: 'Danh mục mới',
+  editLegend: 'Đổi tên danh mục',
+  editLabel: 'Đổi tên danh mục {name}',
+  edit: 'Đổi tên',
+  name: 'Tên danh mục',
+  namePlaceholder: 'ví dụ: Quà tặng',
+  save: 'Lưu',
+  cancel: 'Hủy',
+
+  /**
+   * Delete. There is no confirmation dialog here or anywhere on this surface
+   * (design-system.md §3.9) — the action happens and the undo bar offers to take
+   * it back, with the caret already on it.
+   */
+  remove: 'Xóa',
+  removeLabel: 'Xóa danh mục {name}',
+  /** `{name}` / `{count}` — the undo bar after deleting a category with rows. */
+  removed: 'Đã xóa danh mục {name} · {count} giao dịch chuyển về Chưa phân loại',
+  /** `{name}` — the undo bar after deleting a category nothing was filed under. */
+  removedEmpty: 'Đã xóa danh mục {name}',
+  undo: 'Hoàn tác',
+  dismiss: 'Đóng',
+
+  emptyTitle: 'Chưa có danh mục nào',
+  emptyBody: 'Thêm một danh mục để bắt đầu phân loại chi tiêu.',
+} as const;
+
+/** One message per category-form rejection. */
+export const categoryErrorCopy = {
+  NAME_REQUIRED: 'Đặt tên cho danh mục.',
+  NAME_TAKEN: 'Đã có danh mục trùng tên.',
+} as const;
+
+/* ---------------------------------------------------------------------------
+ * The month band (hub ticket 0004, phase 4) — theme C's summary strip.
+ * ------------------------------------------------------------------------- */
+
+export const monthCopy = {
+  /** `{month}` / `{year}` — the eyebrow over the headline figure. */
+  label: 'Tháng {month} · {year}',
+
+  /** The three figures, per the artboard. */
+  spent: 'đã chi',
+  earned: 'Đã thu',
+  net: 'Chênh lệch',
+  txnCount: 'Giao dịch',
+
+  prev: 'Tháng trước',
+  next: 'Tháng sau',
+
+  /**
+   * The allocation bar's own heading. It names its exclusion out loud, for the
+   * same reason the accounts screen's spending line does: a total that quietly
+   * leaves something out is a total nobody can check.
+   */
+  allocationTitle: 'Tiền đi đâu',
+  allocationNote: 'Không gồm chuyển khoản — chuyển tiền là đổi chỗ, không phải chi tiêu.',
+  /** The bar's accessible name. `{month}` / `{year}` are substituted. */
+  allocationLabel: 'Phân bổ chi tiêu tháng {month} năm {year}',
+
+  /** Uncategorised is a STATE, not a category — same wording as the ledger chip. */
+  uncategorized: 'Chưa phân loại',
+
+  /**
+   * The line under the bar, and the reason the band exists. Three states, chosen
+   * from the data — never asserted:
+   *
+   *   `over-half` is the canvas note verbatim, and it is the acceptance test the
+   *   design canvas wrote for this band. It fires when more than half of the
+   *   month's spending has no category.
+   *   `some` states the amount instead, so a smaller number still reads as a
+   *   number rather than as an alarm. The amount goes LAST in the sentence on
+   *   purpose: it arrives from `formatAmount` carrying its real minus sign
+   *   (sign is direction — design-system.md §3.3), and a signed figure reads as
+   *   a figure at the end of a clause and as a typo at the start of one.
+   *   `clear` is the terminal state — nothing to triage.
+   *
+   * `{amount}` arrives already formatted by the money module.
+   */
+  noteOverHalf: 'Hơn một nửa chi tiêu tháng này chưa biết đi đâu.',
+  noteSome: 'Chi tiêu tháng này chưa biết đi đâu: {amount}.',
+  noteClear: 'Mọi chi tiêu tháng này đều đã có danh mục.',
+  /** The link into the inbox. `{count}` is the WHOLE inbox, matching the badge. */
+  triageAction: 'Phân loại {count} giao dịch',
+
+  /** No transactions at all in the selected month. A terminal state. */
+  emptyMonth: 'Tháng này chưa có giao dịch nào.',
+  /** Transactions exist but none of them is spending — only income, or only transfers. */
+  noSpending: 'Tháng này chưa có khoản chi nào.',
 } as const;

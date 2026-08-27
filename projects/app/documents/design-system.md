@@ -39,6 +39,8 @@ There is no second palette to drift against, and changing a colour is one line.
 | Dashed pill border | `border-dash` | `oklch(0.85 0.02 75)` |
 | Dashed dot border | `border-dash-strong` | `oklch(0.68 0.06 72)` |
 | Category ramp | `bg-category-1…4` | `0.55 0.11 72` → `0.65 0.09 72` → `0.74 0.07 72` → `0.83 0.05 72` |
+| Uncategorised bar segment | `uncat-hatch` (utility) | 135° hatch, `oklch(0.88 0.02 72)` / `oklch(0.93 0.014 78)` |
+| Uncategorised legend chip | `bg-uncat-swatch` | `oklch(0.91 0.018 75)` |
 
 **Type.** Be Vietnam Pro 400/500/600/700, loaded in `src/index.css` and exposed as `--font-sans`; every fallback in the stack is a system face, so a blocked font request degrades rather than breaks. Sizes come from the artboard: 21px/700 wordmark, 20px/700 page title, 28px quick-entry amount, 16px row amount, 15px row description, 13px meta, 12px subtotal, 11px eyebrow.
 
@@ -49,6 +51,7 @@ There is no second palette to drift against, and changing a colour is one line.
 **Two utilities carry the look where a class list would be repeated:**
 - `panel` — the raised 16px surface (`bg-surface-raised` + `border-border-subtle` + `rounded-panel`). It is a utility rather than a shadcn `Card` because three of the four panels on this surface are form elements (`<form>`, `<fieldset>`), which a component that renders a `<div>` cannot be.
 - `eyebrow` — 11px/16, 600, uppercase, `0.1em` tracking, ink-muted. The small label above a number or a ledger day group.
+- `uncat-hatch` — the diagonal hatch on the month band's first bar segment (ticket 0004 phase 4). A utility and not an inline style because it is three colour literals, and a colour literal outside `src/index.css` is a bug (rule 5).
 
 ## 2. The component vocabulary
 
@@ -101,6 +104,15 @@ Adding a primitive later: `npx shadcn@latest add <name>`. If what you add refere
     `data-active-account-count` / `data-archived-account-count`, never
     `data-account-count` — which is the header's, and counts **users**.
     `data-spending-total-minor` is on exactly one element on the surface.
+    Ticket 0004 phases 3–4 keep to it as well. The month band's figures are
+    `data-month-in-minor` / `-out-minor` / `-net-minor` / `-txn-count` /
+    `-transfer-legs` / `-uncategorized-minor` — **never** `data-spending-total-minor`,
+    which is the accounts screen's all-time number and answers a different
+    question. The bar's segments carry `data-bar-segment`; the legend beneath
+    carries `data-slice-minor`, so "sum the segments" is one selector with one
+    answer. And the categories screen counts categories as
+    `data-category-count`, never `data-uncategorized-count` (the header badge's)
+    or `data-inbox-count` (the triage screen's).
 
 11. **No account carries a stored balance, and no screen may add one.** Every
     balance is derived from `opening_balance_minor` plus that account's rows, on
@@ -111,6 +123,24 @@ Adding a primitive later: `npx shadcn@latest add <name>`. If what you add refere
     total, every category breakdown, the uncategorised count and the triage
     inbox — with exactly one implementation, `src/lib/transfers.ts`. Balances are
     the deliberate exception: the money genuinely moved.
+
+12. **A category's colour and its digit key are POSITIONS, not properties — and
+    a rename or a create moves both.** The swatch comes from the index in the
+    name-ordered list (`category-color.ts`, four ramp steps) and the triage digit
+    comes from the same index (`triage/category-keys.ts`, `1`–`9`). Nothing is
+    stored on the data, which is the point: no colour field to drift, no shortcut
+    field to go stale against a renamed category. **The cost is that adding
+    `Bảo hiểm` to today's eight categories moves seven of them to a different
+    digit AND a different ramp step** — observed under Playwright, ticket 0004
+    phase 3. That is accepted, not overlooked, and it is accepted because of
+    where the risk actually is: the ramp carries no identity (nothing reads
+    colour as "which category"), and a digit key is only dangerous while it is
+    under a finger — which cannot happen mid-edit, because `/categories` and
+    `/triage` are different routes and the triage legend is re-read on arrival.
+    **What is NOT acceptable is hiding it**, so `/categories` renders the swatch
+    and the digit for every row, on the one screen where the re-ordering is
+    caused. Storing a colour or a shortcut to stabilise them is a data-model
+    change and is Owner-gated.
 
 ## 4. Entry speed outranks the look
 
@@ -131,6 +161,7 @@ Anything that adds a keystroke to that path is a regression and needs the Owner,
 | Delete a row **and fully recover it** | **2** (`Delete`, `Enter`) | Focus moves to `Hoàn tác` on the bar, so the recovery is already under the caret. |
 | Triage: clear N rows one at a time | **N** (one digit each) | The assigned row leaves the inbox, so the next row falls under the cursor by itself. No `Tab`, no arrow, no `<select>`. |
 | Triage: clear N rows into one category | **2** (`A`, digit) | Measured at N = 12. |
+| Quick entry, with the month band above it | **11** | Unchanged by ticket 0004 phase 4. The band sits above quick entry in the DOM, as the artboard draws it, and costs nothing: the amount box carries `autoFocus`, so the caret still starts there on mount, and nothing was inserted INTO the tab order between amount and description. Re-measured under Playwright with real key events. |
 | Transfer, cold accounts screen → saved pair | **13** | `T` · `5 0 0 0 0 0` · `Tab` · `v v` · `Tab` · `v` · `Enter`. Ticket 0004 phase 2, measured with real key events. `T` is this screen's `N`. Two of those keys are a **Vietnamese first-letter collision** — `Ví Momo` and `Vietcombank` both start with `V`, so the source costs a second `v` to cycle past the first match. An unambiguous account costs one key, and the description is optional (it defaults to `Chuyển tiền: {from} → {to}`), so the floor is **11**. |
 
 **Transfer entry lives on `/accounts`, and that placement is an entry-speed decision.** The obvious home is the ledger's quick-entry row with a source/destination mode — and it is refused, because a mode toggle on that row adds a tab stop to the **11-keystroke** path the Owner walks dozens of times a day, to serve something done a few times a week. That is the regression this section forbids. On the accounts screen the transfer also sits beside the two balances it moves, so its effect is visible in the same glance as the action.
@@ -139,8 +170,8 @@ Anything that adds a keystroke to that path is a regression and needs the Owner,
 
 ## 5. What theme C does NOT include yet
 
-- **The month band** — spent / earned / difference / the one-hue allocation bar. It is feature work belonging to [backlog 0004](../../../management/backlog/0004-app-prototype-accounts-transfers-insight.md) **phase 4**, and phases 1–2 deliberately did not start it. The accounts screen renders a running spending total under the transfer bar, but that is the exclusion PROOF (a total over all transactions, no period, no allocation bar), not the band.
+- ~~**The month band.**~~ **Built — ticket 0004 phase 4.** It sits at the top of the ledger, where the artboard draws it: the month's spend as the largest number on the page, earned / net / count beside it, then a single-hue allocation bar whose first segment is uncategorised — **dashed, never a fifth ramp colour** (rule 7) — with a legend under it and a link into `/triage`. Three departures from the artboard, all deliberate: **no `+`** on the net figure (rule 4, Owner-gated); the headline and the legend amounts render with their real negative sign and outflow colour rather than as unsigned magnitudes in muted ink (rule 3, and the accounts screen's spending total set that precedent in phase 2); and there is **no "Khác" bucket** — every category with spending gets its own segment, so the segments sum to the month's outflow exactly, which is what makes the band checkable. It reads a MONTH and deliberately ignores the ledger's filters. The accounts screen's running spending total stays what it was: the all-time exclusion proof, no period, no bar.
 - **Dark mode.** See the top of this file.
 - **Shortcut chips and a status bar** — worth revisiting inside theme C per ADR 0005, not built.
 
-*Last updated: 2026-08-27 (hub ticket 0004 phases 1–2: rule 3 now says how a transfer leg renders as movement without recolouring the number, rules 10–11 added, the measured transfer path and the reason transfer entry is not on the ledger, and §5's month-band note narrowed to phase 4. Earlier the same day — hub ticket 0003 phases 4–5: the app-level shared components table, rules 9 and 10, and the measured keyboard paths beyond entry. Earlier the same day: created — hub ticket 0005 phase 4) — keep this stamp current in the same edit that changes content.*
+*Last updated: 2026-08-27 (hub ticket 0004 phases 3–4: rule 12 — a category's colour and digit key are positions, what a rename moves, and why that is accepted rather than overlooked; rule 10 gained the month band's and the categories screen's attribute scopes; the `uncat-hatch` / `bg-uncat-swatch` tokens; the measured quick-entry path re-confirmed at 11 with the band above it; §5's month-band entry replaced with what was built and the three deliberate departures from the artboard. Earlier the same day — hub ticket 0004 phases 1–2: rule 3 now says how a transfer leg renders as movement without recolouring the number, rules 10–11 added, the measured transfer path and the reason transfer entry is not on the ledger, and §5's month-band note narrowed to phase 4. Earlier the same day — hub ticket 0003 phases 4–5: the app-level shared components table, rules 9 and 10, and the measured keyboard paths beyond entry. Earlier the same day: created — hub ticket 0005 phase 4) — keep this stamp current in the same edit that changes content.*

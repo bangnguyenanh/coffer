@@ -79,6 +79,16 @@ export function AppShell() {
               {appCopy.nav.accounts}
             </NavLink>
             <NavLink
+              to="/categories"
+              className={({ isActive }) =>
+                isActive
+                  ? 'rounded-pill bg-surface-raised px-4 py-1.5 text-sm font-semibold text-ink shadow-sm'
+                  : 'rounded-pill px-4 py-1.5 text-sm font-medium text-ink-muted'
+              }
+            >
+              {appCopy.nav.categories}
+            </NavLink>
+            <NavLink
               to="/triage"
               className={({ isActive }) =>
                 `flex items-center gap-2 rounded-pill px-4 py-1.5 text-sm ${
