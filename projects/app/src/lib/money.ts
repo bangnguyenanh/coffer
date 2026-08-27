@@ -35,6 +35,17 @@ const currencyFormatter = new Intl.NumberFormat(CURRENCY_LOCALE, {
 });
 
 /**
+ * The same number, grouped but bare: no symbol, no sign, no fraction digits.
+ * Used only by `formatAmountDigits` below.
+ */
+const digitsFormatter = new Intl.NumberFormat(CURRENCY_LOCALE, {
+  style: 'decimal',
+  minimumFractionDigits: CURRENCY_EXPONENT,
+  maximumFractionDigits: CURRENCY_EXPONENT,
+  useGrouping: true,
+});
+
+/**
  * The currency symbol, taken from the formatter rather than typed in, so there
  * is exactly one source for it in the codebase.
  *
@@ -73,6 +84,33 @@ export function formatAmount(amountMinor: number): string {
     );
   }
   return currencyFormatter.format(amountMinor);
+}
+
+/**
+ * The GROUPED DIGITS of an amount, unsigned and without the currency symbol —
+ * `-1250000000` -> `1.250.000.000`.
+ *
+ * This exists for exactly one job: seeding the amount box of the inline row
+ * editor (hub ticket 0003 phase 4, edit half) so an existing row opens showing
+ * the number the way the ledger showed it, rather than as ten ungrouped digits.
+ *
+ * It lives HERE rather than in the editor because grouping is this module's job
+ * and nowhere else's (documents/design-system.md §3.2). Two properties it is
+ * required to have, and both are checked:
+ *   - it round-trips: `parseAmount(formatAmountDigits(n)).amountMinor === |n|`,
+ *     so opening an editor and saving it unchanged cannot alter a stored value;
+ *   - it is unsigned, because DIRECTION is a separate field in the draft and a
+ *     sign in the box is a control on that field, never a multiplier.
+ *
+ * Exponent 0: no scaling, no rounding, and never a fractional digit.
+ */
+export function formatAmountDigits(amountMinor: number): string {
+  if (!Number.isInteger(amountMinor)) {
+    throw new TypeError(
+      `formatAmountDigits expects an integer in minor units; received ${amountMinor}`,
+    );
+  }
+  return digitsFormatter.format(Math.abs(amountMinor));
 }
 
 /** Machine-readable rejection reasons. Copy for these lives in src/copy/strings.ts. */

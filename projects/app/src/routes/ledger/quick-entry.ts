@@ -31,18 +31,20 @@
  * file. Parsing REJECTS with a reason; nothing here rounds, truncates, or
  * reinterprets what was typed.
  *
- * ## Shape, and the half of phase 4 that is deferred
+ * ## Shape — and the edit half, now built
  *
- * Edit / delete is the other half of phase 4 and is **deferred, not dropped**.
- * That is why the rules live here as a pure `EntryDraft -> Omit<Transaction,'id'>`
- * function instead of inside the component: an edit form is the same draft
- * seeded from an existing row, and it can reuse `draftToTransaction` verbatim
- * without this module growing a mode flag. Nothing edit-specific is built.
+ * The rules live here as a pure `EntryDraft -> Omit<Transaction,'id'>` function
+ * rather than inside the component, and the edit half of phase 4 cashed that in
+ * exactly as predicted: the inline row editor is **the same draft seeded from an
+ * existing row** (`draftFromTransaction`) running through **the same**
+ * `draftToTransaction`. This module gained no mode flag, no `isEdit`, and no
+ * second validation path — which is the whole reason a decimal separator cannot
+ * be rejected on entry and coerced on edit. There is only one rule set.
  */
 
 import type { Transaction } from '../../data/types';
 import { isCalendarDate } from '../../lib/calendar-date';
-import { parseAmount, type ParseAmountFailure } from '../../lib/money';
+import { formatAmountDigits, parseAmount, type ParseAmountFailure } from '../../lib/money';
 
 /** Outflow or inflow. The word the UI shows is `Chi` / `Thu`; see copy/strings.ts. */
 export type Direction = 'outflow' | 'inflow';
@@ -153,6 +155,12 @@ export function draftToTransaction(draft: EntryDraft): DraftResult {
       account_id: draft.account_id,
       // Skipping is a decision, recorded as `null` — the state phase 5 triages.
       category_id: draft.category_id === '' ? null : draft.category_id,
+      // Quick entry never produces a transfer: a transfer has two accounts and
+      // this form has one. Transfers are minted by `addTransfer` alone (ticket
+      // 0004 phase 2), and stating `null` here is what makes that structural
+      // rather than a convention — the field is required on `Transaction`, so
+      // this is a decision the compiler forces every writer to make.
+      transfer_id: null,
     },
   };
 }
@@ -172,5 +180,36 @@ export function nextDraft(previous: EntryDraft): EntryDraft {
     amount: '',
     description: '',
     category_id: '',
+  };
+}
+
+/**
+ * The draft that opens an existing row for editing — the inverse of
+ * `draftToTransaction`, and required to round-trip through it exactly.
+ *
+ * Two things it deliberately does:
+ *
+ *   - **The amount box gets the MAGNITUDE, grouped, with no sign and no symbol**
+ *     (`formatAmountDigits`). The sign is not thrown away: it becomes
+ *     `direction`, which is where the contract says direction lives. If the sign
+ *     were left in the box, the toggle and the box could disagree — the exact
+ *     failure `directionFromAmountInput` exists to prevent.
+ *   - **Zero opens as `outflow`.** Zero has no direction, so there is no right
+ *     answer; outflow is the entry default, and `draftAmountMinor` collapses
+ *     `-1 * 0` back to `0`, so a zero row opened and saved untouched is still
+ *     zero and still renders neutral.
+ *
+ * `category_id: null` becomes `''`, the draft's "skipped" value, so an
+ * uncategorised row opens on the same `Chưa phân loại` option quick entry
+ * defaults to — and can be left there.
+ */
+export function draftFromTransaction(txn: Transaction): EntryDraft {
+  return {
+    amount: formatAmountDigits(txn.amount_minor),
+    direction: txn.amount_minor > 0 ? 'inflow' : 'outflow',
+    description: txn.description,
+    account_id: txn.account_id,
+    category_id: txn.category_id ?? '',
+    occurred_on: txn.occurred_on,
   };
 }

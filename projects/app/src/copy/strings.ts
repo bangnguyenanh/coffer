@@ -12,10 +12,16 @@ export const appCopy = {
   tagline: 'Sổ chi tiêu cá nhân',
   nav: {
     ledger: 'Sổ cái',
+    /** Balances, transfers, and archiving — hub ticket 0004 phases 1–2. */
+    accounts: 'Tài khoản',
     /**
-     * The count chip in the pill nav (ticket 0005, theme C). It is a STATUS,
-     * not a destination: the triage screen it will eventually link to is phase
-     * 5 of ticket 0003 and does not exist yet, so nothing here is a link.
+     * The count chip in the pill nav.
+     *
+     * **It became a LINK in phase 5** (hub ticket 0003). Ticket 0005 left it a
+     * status on purpose — *"the triage screen it will eventually link to does
+     * not exist yet"* — and that is exactly the condition that has now changed:
+     * `/triage` exists, and a count of things needing attention that cannot be
+     * clicked is a scoreboard, not a workflow.
      */
     uncategorized: 'Chưa phân loại',
   },
@@ -158,6 +164,101 @@ export const entryErrorCopy = {
 } as const;
 
 /* ---------------------------------------------------------------------------
+ * The ledger row: editing and deleting (hub ticket 0003, phase 4 — edit half).
+ * ------------------------------------------------------------------------- */
+
+export const rowCopy = {
+  /**
+   * A ledger row's accessible name. It carries the keyboard contract because
+   * the row IS the control: one tab stop per row, `Enter` to edit, `Delete` to
+   * delete. `{description}`, `{amount}` and `{date}` are substituted; the amount
+   * arrives already formatted by the money module.
+   */
+  rowLabel: 'Sửa giao dịch {description}, {amount}, ngày {date}. Enter để sửa, Delete để xóa.',
+  /** Shown once above the list, so the keyboard model is discoverable at all. */
+  listHint: 'Tab tới một dòng rồi Enter để sửa, Delete để xóa. Hoàn tác luôn có sẵn.',
+
+  editing: 'Đang sửa giao dịch',
+  save: 'Lưu',
+  cancel: 'Hủy',
+  delete: 'Xóa',
+  /** `{description}` is substituted — the delete button names what it removes. */
+  deleteLabel: 'Xóa giao dịch {description}',
+
+  /** `{description}` / `{amount}` — the undo bar after a delete. */
+  deleted: 'Đã xóa: {description} · {amount}',
+  /**
+   * Deleting one leg of a transfer deletes BOTH (ticket 0004 phase 2). Half a
+   * transfer is not a smaller transfer, it is a wrong balance — so the bar says
+   * what actually happened rather than reporting the one row that was pressed.
+   * `{description}` / `{amount}` are substituted.
+   */
+  deletedTransfer: 'Đã xóa cả hai vế của chuyển khoản: {description} · {amount}',
+  undo: 'Hoàn tác',
+  dismiss: 'Đóng',
+
+  /** `{description}` / `{amount}` — the undo bar after a saved edit. */
+  updated: 'Đã cập nhật: {description} · {amount}',
+  /**
+   * The edit saved a row that the active filter now excludes. Said out loud for
+   * the same reason quick entry says it: a row that simply is not there reads as
+   * data loss, and here the reader watched it vanish under their own cursor.
+   */
+  updatedHidden: 'Giao dịch đã lưu nhưng không còn khớp bộ lọc đang bật.',
+  clearFilters: 'Xóa bộ lọc',
+} as const;
+
+/* ---------------------------------------------------------------------------
+ * The uncategorised triage inbox (hub ticket 0003, phase 5).
+ * ------------------------------------------------------------------------- */
+
+export const triageCopy = {
+  title: 'Chưa phân loại',
+  subtitle: 'Bỏ qua danh mục lúc nhập, dọn một lượt ở đây.',
+
+  /** `{count}` is substituted. Rendered in every state, including zero. */
+  count: '{count} giao dịch chờ phân loại',
+
+  /**
+   * The keyboard contract, stated on the screen. This screen IS its keyboard
+   * model — a user who does not know the keys has a list of rows and no way to
+   * act on them, so this line is functional copy, not a hint.
+   */
+  keysTitle: 'Phím tắt',
+  keys: [
+    { key: '1 – 9', what: 'gán danh mục cho dòng đang chọn (hoặc cho cả vùng chọn)' },
+    { key: '↑ ↓', what: 'di chuyển; giữ Shift để chọn nhiều dòng' },
+    { key: 'Space', what: 'chọn / bỏ chọn dòng hiện tại' },
+    { key: 'A', what: 'chọn tất cả' },
+    { key: 'Esc', what: 'bỏ chọn' },
+  ],
+
+  /** The listbox's accessible name. */
+  listLabel: 'Giao dịch chưa phân loại',
+  /** `{description}`, `{amount}`, `{date}` — one row's accessible name. */
+  rowLabel: '{description}, {amount}, ngày {date}',
+
+  /** `{count}` — the selection counter above the list. */
+  selectedCount: 'Đã chọn {count}',
+  selectAll: 'Chọn tất cả',
+  clearSelection: 'Bỏ chọn',
+
+  /** The category legend. `{key}` is the digit that assigns it. */
+  assignLabel: 'Gán danh mục {name} (phím {key})',
+  /** Categories past the ninth have no digit — the legend says so rather than lying. */
+  noKey: '—',
+
+  /** Nothing left to triage. A terminal state, and it carries data-status="ready". */
+  emptyTitle: 'Không còn giao dịch nào chưa phân loại',
+  emptyBody: 'Mọi giao dịch đều đã có danh mục. Bỏ qua danh mục lúc nhập cũng được — chỗ này sẽ gom lại.',
+
+  /** `{count}` / `{name}` — the undo bar after a batch assignment. */
+  assigned: 'Đã gán {count} giao dịch vào {name}',
+  undo: 'Hoàn tác',
+  dismiss: 'Đóng',
+} as const;
+
+/* ---------------------------------------------------------------------------
  * The auth surface. Screens only — see `src/auth/AuthProvider.tsx`.
  * ------------------------------------------------------------------------- */
 
@@ -221,3 +322,148 @@ export const authErrorCopy: Record<string, string> = {
 
 /** Anything unmapped still says something, rather than failing silently. */
 export const authErrorFallback = 'Không thực hiện được. Vui lòng thử lại.';
+
+/* ---------------------------------------------------------------------------
+ * Accounts (hub ticket 0004, phase 1) and transfers (phase 2).
+ * ------------------------------------------------------------------------- */
+
+/** The three account kinds, named for a reader. Keys are `AccountKind`. */
+export const accountKindCopy = {
+  cash: 'Tiền mặt',
+  bank: 'Ngân hàng',
+  ewallet: 'Ví điện tử',
+} as const;
+
+export const accountsCopy = {
+  title: 'Tài khoản',
+  /**
+   * The subtitle states the rule the screen is built on, because a balance
+   * nobody can explain is a balance nobody trusts: it is DERIVED, every render,
+   * from the opening balance plus the account's rows. There is no stored
+   * balance anywhere in this product (hub ticket 0001 non-goal).
+   */
+  subtitle: 'Số dư được tính từ số dư đầu kỳ cộng các giao dịch — không lưu sẵn ở đâu cả.',
+
+  /** `{count}` is substituted. Active accounts only; archived have their own line. */
+  count: '{count} tài khoản đang dùng',
+  totalLabel: 'Tổng số dư',
+  openingLabel: 'Số dư đầu kỳ',
+  balanceLabel: 'Số dư',
+  /** `{count}` — how many rows an account holds. */
+  txnCount: '{count} giao dịch',
+
+  openLabel: 'Mở tài khoản {name}',
+  open: 'Xem sổ',
+
+  add: 'Thêm tài khoản',
+  addLegend: 'Tài khoản mới',
+  editLegend: 'Sửa tài khoản',
+  editLabel: 'Sửa tài khoản {name}',
+  edit: 'Sửa',
+
+  name: 'Tên tài khoản',
+  namePlaceholder: 'ví dụ: Techcombank',
+  kind: 'Loại',
+  opening: 'Số dư đầu kỳ',
+  save: 'Lưu',
+  cancel: 'Hủy',
+
+  /**
+   * Archive, never delete. An account with transactions cannot be removed
+   * without orphaning history, so the destructive action on this screen is one
+   * that keeps everything and simply stops offering the account for new entry.
+   */
+  archive: 'Lưu trữ',
+  archiveLabel: 'Lưu trữ tài khoản {name}',
+  unarchive: 'Dùng lại',
+  unarchiveLabel: 'Dùng lại tài khoản {name}',
+  archivedTitle: 'Đã lưu trữ',
+  archivedNote:
+    'Không còn hiện trong ô chọn tài khoản khi nhập hay khi chuyển tiền. Số dư và toàn bộ lịch sử vẫn còn nguyên.',
+  /** `{name}` — the undo bar after archiving. */
+  archived: 'Đã lưu trữ: {name}',
+  /** `{name}` — the undo bar after un-archiving. */
+  unarchived: 'Đã dùng lại: {name}',
+  /** `{name}` / `{amount}` — the undo bar after a create or an edit. */
+  created: 'Đã thêm tài khoản: {name} · {amount}',
+  updated: 'Đã cập nhật tài khoản: {name}',
+  undo: 'Hoàn tác',
+  dismiss: 'Đóng',
+
+  emptyTitle: 'Chưa có tài khoản nào',
+  emptyBody: 'Thêm một tài khoản để bắt đầu theo dõi số dư.',
+
+  /**
+   * The line under the transfer bar that phase 2 has to hold still. `{count}`
+   * is substituted. It names its own exclusion out loud, because a total that
+   * quietly leaves something out is a total nobody can check.
+   */
+  spendingLabel: 'Tổng chi ({count} giao dịch, không gồm chuyển khoản):',
+
+  detailBack: 'Tất cả tài khoản',
+  detailNotFound: 'Không tìm thấy tài khoản này.',
+  detailEmptyTitle: 'Tài khoản này chưa có giao dịch nào',
+  detailEmptyBody: 'Số dư đang bằng đúng số dư đầu kỳ.',
+} as const;
+
+/** One message per account-form rejection. Amount reasons use `amountErrorCopy`. */
+export const accountErrorCopy = {
+  NAME_REQUIRED: 'Đặt tên cho tài khoản.',
+  KIND_REQUIRED: 'Chọn loại tài khoản.',
+} as const;
+
+export const transferCopy = {
+  legend: 'Chuyển tiền',
+  title: 'Chuyển tiền',
+  /**
+   * The whole point of the feature, said on the screen. A transfer that quietly
+   * behaved differently from an expense would be a rule the Owner has to take on
+   * trust; this line is what makes it a promise the screen keeps.
+   */
+  note: 'Chuyển tiền không phải chi tiêu: hai vế dùng chung một mã chuyển khoản và không vào tổng chi hay báo cáo danh mục.',
+  /** The keyboard contract, same shape as quick entry's hint line. */
+  hint: 'Nhấn T để tới ô số tiền. Số tiền → Từ → Đến → Enter.',
+
+  amount: 'Số tiền',
+  amountPlaceholder: '500.000',
+  from: 'Từ tài khoản',
+  to: 'Đến tài khoản',
+  description: 'Mô tả',
+  date: 'Ngày',
+  submit: 'Chuyển',
+
+  /**
+   * The description a transfer gets when none is typed. `{from}` / `{to}` are
+   * substituted. It exists so the fast path costs no typing at all: a transfer
+   * already says everything it needs to in its two accounts.
+   */
+  defaultDescription: 'Chuyển tiền: {from} → {to}',
+
+  /** `{amount}` (already formatted) / `{from}` / `{to}` — the notice after a transfer. */
+  saved: 'Đã chuyển {amount} · {from} → {to}. Không tính vào chi tiêu.',
+  undo: 'Hoàn tác',
+  dismiss: 'Đóng',
+
+  /** The chip on a ledger row that is one leg of a transfer. */
+  rowBadge: 'Chuyển khoản',
+  /** `{from}` / `{to}` — the movement, rendered in place of a category. */
+  movement: '{from} → {to}',
+  /**
+   * A transfer leg's accessible name. It says the two things a transfer row
+   * does differently from every other row: it is not edited one leg at a time,
+   * and deleting it takes both legs.
+   */
+  rowLabel:
+    'Chuyển khoản {movement}, {amount}, ngày {date}. Không sửa riêng từng vế; Delete để xóa cả cặp.',
+  unknownAccount: 'Tài khoản không xác định',
+
+  needTwoAccounts: 'Cần ít nhất hai tài khoản đang dùng thì mới chuyển tiền được.',
+} as const;
+
+/** One message per transfer rejection. Amount reasons use `amountErrorCopy`. */
+export const transferErrorCopy = {
+  SAME_ACCOUNT: 'Chọn hai tài khoản khác nhau — chuyển vào chính nó thì không đi đâu cả.',
+  AMOUNT_ZERO: 'Số tiền chuyển phải lớn hơn 0.',
+  ACCOUNT_REQUIRED: 'Chọn tài khoản.',
+  DATE_INVALID: 'Ngày phải là một ngày lịch hợp lệ.',
+} as const;

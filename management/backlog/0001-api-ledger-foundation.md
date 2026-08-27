@@ -50,3 +50,13 @@ Pinned before any client work starts:
 - Phase 2: `<files, evidence>`
 - Phase 3: `<files, evidence>`
 - Harness delta: `<what this taught the system, or "None">`
+
+
+## Two columns the client now needs — added 2026-08-27, from `app`
+
+[Ticket 0004](0004-app-prototype-accounts-transfers-insight.md) phases 1–2 built accounts and transfers on the client, and produced two fields this schema does not have:
+
+- **`accounts.archived`** — boolean. An account with transactions can never be deleted without orphaning history, so archive is the only destructive edge the client offers, and it is reversible. The client chose `archived: boolean` over `archived_at` deliberately: the UI needs only *whether*, and a timestamp nothing renders is speculative modelling. Widening it later is cheap.
+- **`transactions.transfer_id`** — or whatever the transfer ADR settles on. **Do not write this column until that ADR exists** ([CANDIDATES](../decisions/CANDIDATES.md) carries the evidence 0004 produced). The client's linked-pair model is provisional and its report argues the invariant belongs in the database as a deferred constraint — two legs summing to zero, sharing `occurred_on` — rather than in application code, which is where this prototype had to keep it and where it leaked into four consumers.
+
+Both are documented on the client in `src/data/types.ts`.

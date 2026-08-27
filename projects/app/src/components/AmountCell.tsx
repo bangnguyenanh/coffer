@@ -1,4 +1,4 @@
-import { formatAmount } from '../../lib/money';
+import { formatAmount } from '../lib/money';
 
 /**
  * One amount, rendered as a direction.
@@ -17,6 +17,13 @@ import { formatAmount } from '../../lib/money';
  * `className` exists so the same component can be a 16px row amount and a 12px
  * day subtotal (ticket 0005) — SIZE is the caller's business, colour and sign
  * are not.
+ *
+ * **It moved out of `routes/ledger/` in phase 5**, when the triage inbox became
+ * a second screen rendering amounts. That is the promotion rule in
+ * documents/coding-conventions.md — shared once a second consumer exists — and
+ * it matters more than usual here: two screens rendering the same amount with
+ * two components is two chances for the same number to pick up a different sign
+ * colour, which rule 3 of the design system forbids outright.
  */
 export function AmountCell({
   amountMinor,

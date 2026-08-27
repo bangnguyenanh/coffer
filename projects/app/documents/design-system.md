@@ -59,7 +59,15 @@ There is no second palette to drift against, and changing a colour is one line.
 | `Button` | save transaction, sign in, sign up, sign out | Every button on the surface. Variants carry the ochre primary and the ghost header action. |
 | `Input` | the four auth fields | Focus ring, invalid state and sizing in one place. The ledger's own fields are ruled lines, not boxes, so they stay native elements styled with tokens. |
 | `Label` | every quick-entry control, every auth field | Radix `Label` — the quick-entry row has no room for visible labels, so they are `sr-only` and the accessible name still survives. |
-| `Badge` | the uncategorised count in the header | A count chip that is a status, not a link. |
+| `Badge` | the uncategorised count in the header | The count chip. **It is now inside a `NavLink` to `/triage`** (ticket 0003 phase 5) — ticket 0005 left it a bare status only because the screen it points at did not exist. |
+
+**App-level shared components, in `src/components/`** (ours, not vendored — promoted only once a second consumer existed, per `coding-conventions.md`):
+
+| Component | Used by | Why it is shared |
+|---|---|---|
+| `AmountCell` | ledger rows, day subtotals, triage rows, account balances, the accounts total | Rule 3 below is only enforceable if one component owns sign→colour. Two screens rendering amounts with two components is two chances for the same number to pick up a different colour. |
+| `UndoBar` | ledger delete, triage assignment, account archive, a completed transfer | The product has **no confirmation dialogs** (§3 rule 9). One bar, so "how do I take that back" has one answer and one look. |
+| `category-color` | ledger rows, triage rows | The ramp, and the dashed uncategorised swatch. Not a component — the ramp derived from list position, which triage also renders. |
 
 **Deliberately NOT added, and the reasons are load-bearing:**
 
@@ -74,11 +82,35 @@ Adding a primitive later: `npx shadcn@latest add <name>`. If what you add refere
 1. **Money is tabular.** Any element rendering an amount carries `tabular-nums`. Columns of numbers that shift under their own digits are unreadable, and this product is a column of numbers.
 2. **Every amount string comes from `src/lib/money.ts`.** No component formats, groups, or types a `₫`. `CURRENCY_SYMBOL` is exported for the one static adornment in the quick-entry row; anything that renders a *value* calls `formatAmount`.
 3. **Sign colour comes from the amount's direction, never from context.** `AmountCell` derives `data-direction` from the sign — positive is `inflow`, negative is `outflow`, **zero is neutral ink-muted**. An account or a category never implies a direction, and the same amount never renders positive in one view and negative in another.
+   **A transfer leg does not bend this** (ticket 0004 phase 2). The ticket asks that the ledger render a transfer as *movement* rather than as income or expense, and it does — the row carries a `Chuyển khoản` chip and names both ends (`Vietcombank → Ví Momo`) in the slot a category would occupy, with a two-way arrow instead of a category dot. But **the amount keeps its sign and its sign colour**: the money really did leave that account. Movement is said by the ROW; recolouring the number to a third "neutral movement" tone would be exactly the context-driven colour this rule forbids.
 4. **No `+` on a positive amount, aggregates included.** The artboard shows `+10.977.000 ₫`; `formatAmount` does not emit a `+` and `Intl` does not either. Rendering one is a money-contract extension and Owner-gated (ADR 0005 → *Watch*).
 5. **No colour literal outside `src/index.css`.** No hex, no `oklch(...)` in a component, no `style={{ color: … }}`. If a token is missing, add it to the palette.
-6. **`data-*` attributes are the evidence surface.** Every terminal state carries `data-status="ready"` — error and empty states included. What a reviewer must confirm goes on the DOM (`data-result-count`, `data-direction`, `data-day-subtotal`, `data-amount-minor`), because that turns a claim into one greppable command.
+6. **`data-*` attributes are the evidence surface.** Every terminal state carries `data-status="ready"` — error and empty states included. What a reviewer must confirm goes on the DOM (`data-result-count`, `data-direction`, `data-day-subtotal`, `data-amount-minor`, `data-balance-minor`, `data-spending-total-minor`, `data-transfer-id`), because that turns a claim into one greppable command.
 7. **Uncategorised is a state, not a category.** It renders as a **dashed** swatch and the accent-coloured word `Chưa phân loại` — never as a fifth ramp colour.
 8. **Copy lives in `src/copy/strings.ts`.** No user-facing string typed into a component.
+9. **No confirmation dialog, anywhere.** A destructive action happens, and an
+   `UndoBar` offers to take it back with the caret already on it. A dialog taxes
+   the ninety-nine correct actions to protect the hundredth, and by then it is
+   being dismissed unread. There is no `dialog`, `role="dialog"` or
+   `role="alertdialog"` on this surface and adding one is Owner-gated.
+10. **One evidence attribute, one scope.** `data-uncategorized-count` is the
+    header badge's and nothing else's; the triage screen's own count is
+    `data-inbox-count`. Two elements answering to one attribute is an ambiguous
+    selector, which defeats the entire point of rule 6.
+    Ticket 0004 keeps to it: the accounts screen counts money accounts as
+    `data-active-account-count` / `data-archived-account-count`, never
+    `data-account-count` — which is the header's, and counts **users**.
+    `data-spending-total-minor` is on exactly one element on the surface.
+
+11. **No account carries a stored balance, and no screen may add one.** Every
+    balance is derived from `opening_balance_minor` plus that account's rows, on
+    every render (`src/lib/account-balance.ts`). Hub ticket 0001 makes a cached
+    balance column an explicit non-goal; a derived number that disagrees with the
+    ledger is the bug this rule exists to prevent. **And a transfer is not
+    spending**: a row carrying a `transfer_id` is excluded from every spending
+    total, every category breakdown, the uncategorised count and the triage
+    inbox — with exactly one implementation, `src/lib/transfers.ts`. Balances are
+    the deliberate exception: the money genuinely moved.
 
 ## 4. Entry speed outranks the look
 
@@ -90,10 +122,25 @@ From ADR 0005, and it is the acceptance test for any change to the ledger screen
 
 Anything that adds a keystroke to that path is a regression and needs the Owner, not a design opinion.
 
+**The other measured paths** (ticket 0003 phases 4–5, all observed under Playwright with real key events, not asserted):
+
+| Path | Keystrokes | Notes |
+|---|---|---|
+| Quick entry, cold ledger → saved row | **11** | Unchanged by the `EntryFields` extraction — same DOM order, same tab order. |
+| Ledger row → open the editor | **1** (`Enter`) | The row **is** the control: one tab stop per row, not two. `Enter` edits, `Delete`/`Backspace` deletes. A per-row edit + delete button pair would be 112 tab stops on a 56-row ledger. |
+| Delete a row **and fully recover it** | **2** (`Delete`, `Enter`) | Focus moves to `Hoàn tác` on the bar, so the recovery is already under the caret. |
+| Triage: clear N rows one at a time | **N** (one digit each) | The assigned row leaves the inbox, so the next row falls under the cursor by itself. No `Tab`, no arrow, no `<select>`. |
+| Triage: clear N rows into one category | **2** (`A`, digit) | Measured at N = 12. |
+| Transfer, cold accounts screen → saved pair | **13** | `T` · `5 0 0 0 0 0` · `Tab` · `v v` · `Tab` · `v` · `Enter`. Ticket 0004 phase 2, measured with real key events. `T` is this screen's `N`. Two of those keys are a **Vietnamese first-letter collision** — `Ví Momo` and `Vietcombank` both start with `V`, so the source costs a second `v` to cycle past the first match. An unambiguous account costs one key, and the description is optional (it defaults to `Chuyển tiền: {from} → {to}`), so the floor is **11**. |
+
+**Transfer entry lives on `/accounts`, and that placement is an entry-speed decision.** The obvious home is the ledger's quick-entry row with a source/destination mode — and it is refused, because a mode toggle on that row adds a tab stop to the **11-keystroke** path the Owner walks dozens of times a day, to serve something done a few times a week. That is the regression this section forbids. On the accounts screen the transfer also sits beside the two balances it moves, so its effect is visible in the same glance as the action.
+
+**Digit keys, not a `<select>`, on the triage screen — and this is the same rule as §2's.** First-letter matching collides in Vietnamese (`Cà phê` / `Chợ & siêu thị`), and a listbox per row costs a tab in and a tab out. Categories bind to `1`–`9` by their position in the name-ordered list; past the ninth there is no key and the legend renders `—` rather than lying.
+
 ## 5. What theme C does NOT include yet
 
-- **The month band** — spent / earned / difference / the one-hue allocation bar. It is feature work belonging to [backlog 0004](../../../management/backlog/0004-app-prototype-accounts-transfers-insight.md). Ticket 0005 built the tokens it will use (the category ramp, the eyebrow, the panel) and deliberately not the band.
+- **The month band** — spent / earned / difference / the one-hue allocation bar. It is feature work belonging to [backlog 0004](../../../management/backlog/0004-app-prototype-accounts-transfers-insight.md) **phase 4**, and phases 1–2 deliberately did not start it. The accounts screen renders a running spending total under the transfer bar, but that is the exclusion PROOF (a total over all transactions, no period, no allocation bar), not the band.
 - **Dark mode.** See the top of this file.
 - **Shortcut chips and a status bar** — worth revisiting inside theme C per ADR 0005, not built.
 
-*Last updated: 2026-08-27 (created — hub ticket 0005 phase 4) — keep this stamp current in the same edit that changes content.*
+*Last updated: 2026-08-27 (hub ticket 0004 phases 1–2: rule 3 now says how a transfer leg renders as movement without recolouring the number, rules 10–11 added, the measured transfer path and the reason transfer entry is not on the ledger, and §5's month-band note narrowed to phase 4. Earlier the same day — hub ticket 0003 phases 4–5: the app-level shared components table, rules 9 and 10, and the measured keyboard paths beyond entry. Earlier the same day: created — hub ticket 0005 phase 4) — keep this stamp current in the same edit that changes content.*

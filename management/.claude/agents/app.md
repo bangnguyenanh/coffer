@@ -47,8 +47,10 @@ This is the rule that costs the most when it is broken, so it comes first. If `@
 - Drive the real app on `vite preview`, not the dev server — the dev server's module-graph boot is slower and flakier under automation.
 - **Render your evidence into the DOM.** Put `data-*` attributes on the view for what a reviewer must confirm: `data-result-count`, `data-direction`, `data-filter-query`. This turns a claim into one greppable command and it is the cheapest verification this project has.
 - **Every terminal state carries `data-status="ready"`** — error and empty states included. A wait that accepts only the happy state hangs forever on a screen the app is never going to leave.
-- **`Intl.NumberFormat('vi-VN')` emits U+00A0 before `₫`.** Asserting `'0 ₫'` with a plain space fails against *correct* output — assert `'0\u00a0₫'`.
-- **Money needs no browser at all.** `node --experimental-strip-types` against `src/lib/money.ts` proves formatting and parsing in about a second. Prefer it always: it is free, and it is the one invariant this product cannot get wrong.
+- **`Intl.NumberFormat('vi-VN')` emits U+00A0 before `₫`.** Asserting `'0 ₫'` with a plain space fails against *correct* output — assert `'0\u00a0₫'`. **The matcher decides whether this bites:** `toHaveText` normalizes whitespace and forgives it; `toHaveAttribute` does not. Write `\u00a0` explicitly in every attribute comparison.
+- **Money needs no browser at all.** `node --experimental-strip-types` against `src/lib/money.ts` proves formatting and parsing in about a second. Prefer it always: it is free, and it is the one invariant this product cannot get wrong. It works on that module because it imports nothing — anything **above** it uses extensionless relative imports that only a bundler resolves, so it dies on `ERR_MODULE_NOT_FOUND`. To check one of those, copy it and its dependencies flat into a scratch dir and rewrite the imports with one `sed`.
+- **`page.goto` is not a way to reach a state here — it is a way to start over.** This prototype has no persistence, so a navigation re-seeds the data *and signs you out*, landing on `/login`. A spec that must reach a state stays on one page load. **Watch this one when `api` lands:** `goto` starts working again, and a spec written against today's habit will then pass for the wrong reason.
+- **`Control+a` is not select-all on macOS** — it moves to line start, so a "cleared" field silently becomes an appended one. Use Playwright's `ControlOrMeta+a`.
 
 ### When typing itself is the claim
 

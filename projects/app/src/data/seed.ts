@@ -35,8 +35,26 @@ import transactionsJson from './transactions.json';
  * `Account` with only the string-literal union relaxed — the exact shape a JSON
  * module can be proved to have. Every other field is checked against the real
  * `Account` type, so the boundary is as static as the format allows.
+ *
+ * `archived` is OPTIONAL here and required on `Account` (ticket 0004 phase 1).
+ * A fixture row should not have to write `"archived": false` to mean "an
+ * ordinary account" — but every row the app holds in memory answers the
+ * question, so the default is applied once, here, rather than at each reader.
  */
-type JsonAccount = Omit<Account, 'kind'> & { readonly kind: string };
+type JsonAccount = Omit<Account, 'kind' | 'archived'> & {
+  readonly kind: string;
+  readonly archived?: boolean;
+};
+
+/**
+ * `Transaction` with `transfer_id` optional — same reasoning as `archived`
+ * above, and the same default-once treatment. In memory the field is always
+ * present and always answers the question, because that answer is what decides
+ * whether a row counts as spending (`src/lib/transfers.ts`).
+ */
+type JsonTransaction = Omit<Transaction, 'transfer_id'> & {
+  readonly transfer_id?: string | null;
+};
 
 /** The `AccountKind` members, kept next to the type they narrow to. */
 const ACCOUNT_KINDS: readonly AccountKind[] = ['cash', 'bank', 'ewallet'];
@@ -51,7 +69,12 @@ function toAccount(row: JsonAccount): Account {
       `data/accounts.json: account \`${row.id}\` has kind \`${row.kind}\`; expected one of ${ACCOUNT_KINDS.join(', ')}.`,
     );
   }
-  return { ...row, kind: row.kind };
+  return { ...row, kind: row.kind, archived: row.archived ?? false };
+}
+
+/** A JSON row, with `transfer_id` defaulted. No fixture row is a transfer today. */
+function toTransaction(row: JsonTransaction): Transaction {
+  return { ...row, transfer_id: row.transfer_id ?? null };
 }
 
 export interface Seed {
@@ -66,6 +89,6 @@ export function readSeed(): Seed {
     accounts: (accountsJson satisfies readonly JsonAccount[]).map(toAccount),
     /** Flat — nested categories are an open decision, out of scope for 0003. */
     categories: categoriesJson satisfies readonly Category[],
-    transactions: transactionsJson satisfies readonly Transaction[],
+    transactions: (transactionsJson satisfies readonly JsonTransaction[]).map(toTransaction),
   };
 }

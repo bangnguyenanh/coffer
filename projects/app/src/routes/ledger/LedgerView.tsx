@@ -1,7 +1,10 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { ledgerCopy } from '../../copy/strings';
+import { UndoBar } from '../../components/UndoBar';
+import { ledgerCopy, rowCopy } from '../../copy/strings';
 import type { Transaction } from '../../data/types';
+import { formatAmount } from '../../lib/money';
+import { useAppData } from '../../state/useAppData';
 import { LedgerFilters } from './LedgerFilters';
 import { QuickEntry } from './QuickEntry';
 import { TransactionList } from './TransactionList';
@@ -41,11 +44,41 @@ import {
  * filter on save — throws away the subset the Owner deliberately asked for, and
  * doing nothing at all makes a saved row look lost. See `onClearFilters` below.
  *
+ * ## Phase 4, edit half: this view owns what happens AFTER a write
+ *
+ * The list owns which row is open (`TransactionList`) and the editor owns the
+ * draft (`RowEditor`). What lands here is the consequence of a commit, because
+ * only this view knows the filters:
+ *
+ * - **Deleting** removes the row and raises an undo bar holding the removed row.
+ *   The row is not retained by the shared state — undo restores the object this
+ *   view is holding, with its original id, and `ordering.ts` puts it back in
+ *   exactly the slot it left. No stored index, no re-numbering.
+ * - **Saving an edit that no longer matches the filter** would make the row
+ *   vanish under the reader's cursor. It is said out loud, with a way to clear
+ *   the filters — the same rule quick entry follows, for the same reason. The
+ *   filter is never silently widened.
+ *
+ * **There is no confirmation dialog anywhere in this flow**, and the reasoning
+ * is written out in `UndoBar`.
+ *
  * **Theme C (ticket 0005) does NOT add the month band.** The summary strip in
  * the artboard — spent / earned / difference / allocation bar — is feature work
  * belonging to ticket 0004, and this ticket builds the tokens it will use, not
  * the band itself.
  */
+
+/**
+ * What just happened to a row, and what can be done about it.
+ *
+ * `deleted` holds a LIST since ticket 0004 phase 2: deleting one leg of a
+ * transfer deletes both, and the undo bar restores exactly what was removed. An
+ * ordinary delete is a list of one, so there is one delete path and not two.
+ */
+type LedgerNotice =
+  | { readonly kind: 'deleted'; readonly transactions: readonly Transaction[] }
+  | { readonly kind: 'updated-hidden'; readonly transaction: Transaction };
+
 export function LedgerView() {
   // Filter state is the URL, not component state: one source of truth, and a
   // filtered ledger is linkable.
@@ -70,18 +103,57 @@ export function LedgerView() {
   const clearFilters = useCallback((): void => setFilters(emptyLedgerFilters), [setFilters]);
 
   const { transactions, total, accounts, categories, filterQuery } = useLedger(filters);
+  const { updateTransaction, removeTransaction, restoreTransactions } = useAppData();
+
+  /**
+   * Quick entry offers ACTIVE accounts only (ticket 0004 phase 1) — that is what
+   * archiving is for. Everything else on this screen keeps the full list: the
+   * filter controls and the row labels have to be able to name an archived account, or
+   * its history becomes unreadable the moment it is put away.
+   */
+  const activeAccounts = useMemo(
+    () => accounts.filter((account) => !account.archived),
+    [accounts],
+  );
+
+  const [notice, setNotice] = useState<LedgerNotice | null>(null);
 
   const filtered = isFiltered(filters);
+
+  const saveEdit = useCallback(
+    (id: string, input: Omit<Transaction, 'id'>): void => {
+      const updated = updateTransaction(id, input);
+      if (updated === null) return;
+      // The only thing worth saying after a successful save is when the row is
+      // about to disappear from the list the user is looking at.
+      setNotice(
+        matchesFilters(updated, filters)
+          ? null
+          : { kind: 'updated-hidden', transaction: updated },
+      );
+    },
+    [updateTransaction, filters],
+  );
+
+  const deleteRow = useCallback(
+    (transaction: Transaction): void => {
+      const removed = removeTransaction(transaction.id);
+      if (removed.length === 0) return;
+      setNotice({ kind: 'deleted', transactions: removed });
+    },
+    [removeTransaction],
+  );
 
   return (
     <section
       aria-labelledby="ledger-title"
       data-view="ledger"
       data-filter-query={filterQuery}
+      data-notice={notice?.kind ?? ''}
       data-status="ready"
     >
       <QuickEntry
-        accounts={accounts}
+        accounts={activeAccounts}
         categories={categories}
         matchesCurrentFilter={matchesCurrentFilter}
         onClearFilters={clearFilters}
@@ -119,11 +191,78 @@ export function LedgerView() {
             transactions={transactions}
             accounts={accounts}
             categories={categories}
+            onSave={saveEdit}
+            onDelete={deleteRow}
           />
         </div>
       )}
+
+      {notice?.kind === 'deleted' && (
+        <UndoBar
+          kind="deleted"
+          message={deletedMessage(notice.transactions)}
+          actionLabel={rowCopy.undo}
+          onAction={() => {
+            const restored = notice.transactions;
+            restoreTransactions(restored);
+            setNotice(null);
+            // The undo button unmounts with the bar; hand the caret back to the
+            // row that just came back, so the keyboard keeps its place. For a
+            // restored transfer that is the leg the reader was standing on —
+            // the first of the pair, which is the source leg.
+            const anchor = restored[0];
+            if (anchor === undefined) return;
+            requestAnimationFrame(() => {
+              document
+                .querySelector<HTMLElement>(
+                  `[data-transaction-id="${CSS.escape(anchor.id)}"] [data-row-control]`,
+                )
+                ?.focus();
+            });
+          }}
+          dismissLabel={rowCopy.dismiss}
+          onDismiss={() => setNotice(null)}
+        />
+      )}
+
+      {notice?.kind === 'updated-hidden' && (
+        <UndoBar
+          kind="updated-hidden"
+          message={`${rowCopy.updated
+            .replace('{description}', notice.transaction.description)
+            .replace('{amount}', formatAmount(notice.transaction.amount_minor))} — ${
+            rowCopy.updatedHidden
+          }`}
+          actionLabel={rowCopy.clearFilters}
+          onAction={() => {
+            clearFilters();
+            setNotice(null);
+          }}
+          dismissLabel={rowCopy.dismiss}
+          onDismiss={() => setNotice(null)}
+          // Informational: the row is safe, it is just not on screen. Stealing
+          // the caret here would interrupt somebody mid-correction.
+          autoFocusAction={false}
+        />
+      )}
     </section>
   );
+}
+
+/**
+ * What the undo bar says after a delete.
+ *
+ * One row reads as itself; a transfer reads as the pair it was, because that is
+ * what was removed. Naming only the leg the reader pressed would under-report
+ * the deletion by exactly one row and one account balance.
+ */
+function deletedMessage(removed: readonly Transaction[]): string {
+  const anchor = removed.find((txn) => txn.amount_minor < 0) ?? removed[0];
+  if (anchor === undefined) return '';
+  const template = removed.length > 1 ? rowCopy.deletedTransfer : rowCopy.deleted;
+  return template
+    .replace('{description}', anchor.description)
+    .replace('{amount}', formatAmount(anchor.amount_minor));
 }
 
 function Placeholder({ title, body }: { readonly title: string; readonly body?: string }) {

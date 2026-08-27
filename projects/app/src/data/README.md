@@ -42,6 +42,48 @@ Hub `CLAUDE.md` + [ADR 0003](../../../../../management/decisions/0003-currency-v
 - No per-row currency field, and no `balance` field on an account — a balance is
   derived from `opening_balance_minor` plus the account's transactions.
 
+## Two fields a row may omit
+
+Added by hub ticket 0004 (phases 1 and 2). Both are **required in memory and
+optional in the JSON**: `src/data/seed.ts` applies the default once, so a
+fixture row does not have to write out the ordinary case, while every row the
+app holds still answers the question.
+
+| Field | On | Omitted means | Why it exists |
+|---|---|---|---|
+| `archived` | an account | `false` | Accounts are **archived, never deleted** — deleting one would orphan its transactions. An archived account keeps its balance, its rows and its detail page, and simply stops being offered in the entry and transfer pickers. |
+| `transfer_id` | a transaction | `null` | The leg of a transfer this row belongs to. **A row that has one is excluded from every spending total and category breakdown** — and from the uncategorised count and the triage inbox, because a transfer has no category and can never be given one. The rule has exactly one implementation, `src/lib/transfers.ts`. |
+
+**`transfer_id`'s shape is provisional.** The linked pair (two rows, one
+`transfer_id`) versus a single row with a counter-account column is an open ADR
+in the hub's `decisions/CANDIDATES.md`, and it must be resolved before `api`
+writes its migration. `archived` is a column hub ticket 0001's schema does not
+have yet — it is flagged, not assumed.
+
+## The opening balances were raised on 2026-08-27, and why
+
+Until hub ticket 0004 phase 1 nothing on this surface read
+`opening_balance_minor`: there was no accounts screen, so the numbers were never
+added up. The moment balances were derived, three of the four accounts came out
+**negative** — `txn_033` alone is a ₫1.25 billion apartment deposit against an
+₫18.5 million opening balance — which is arithmetically correct over fixtures
+that were never built to add up.
+
+So the three used accounts were opened with enough money to make their derived
+balances plausible, and nothing else changed: no row was added, edited or
+removed, and **the 56 / 4 / 0 / 9 counts below are untouched**.
+
+| Account | Rows sum to | Opening balance | Derived balance |
+|---|---|---|---|
+| `acc_cash` | `-2.350.000` | `3.500.000` | `1.150.000` |
+| `acc_vcb` | `-1.197.779.000` | `1.320.000.000` | `122.221.000` |
+| `acc_momo` | `-1.230.000` | `2.000.000` | `770.000` |
+| `acc_tpb_savings` | `0` (no rows) | `60.000.000` | `60.000.000` |
+
+`acc_vcb`'s ten-digit opening balance is deliberate, and it earns its keep the
+same way `txn_033` does: it is now the **balance column's** magnitude stress
+case, so a ten-digit number has to render in full there too.
+
 ## The rows that must not be trimmed
 
 Each of these was added to cover a case the happy path does not reach. Deleting
@@ -63,8 +105,12 @@ Counts worth keeping stable, because the observed-behavior checks quote them:
 
 ## What is deliberately absent
 
-- **No transfers between accounts.** The transfer model is an open decision
-  (hub ticket 0004); inventing one in fixtures would pre-empt it.
+- **No transfer rows.** `transfer_id` exists on the type (see above) and the
+  transfer form on `/accounts` mints pairs at runtime, but **no fixture row is a
+  transfer**, deliberately: seeding two would change the `56 transactions` and
+  `4 uncategorized` counts that the closed phases quote as evidence, and the
+  model is still provisional. A demonstration creates its own transfer, which is
+  also the only way to observe balances *before and after* one.
 - **No nested categories.** Categories are flat — nesting is unresolved in
   `decisions/CANDIDATES.md`.
 - **No account balances.** Derived, never stored.

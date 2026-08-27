@@ -1,16 +1,22 @@
-import { useMemo } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { Account, Category, Transaction } from '../../data/types';
-import { ledgerCopy } from '../../copy/strings';
+import { ledgerCopy, rowCopy } from '../../copy/strings';
 import { formatDayHeading } from '../../lib/calendar-date';
 import { formatAmount } from '../../lib/money';
-import { AmountCell } from './AmountCell';
-import { categoryDotClass } from './category-color';
+import { captureRowAnchor, restoreRowAnchor, type RowAnchor } from '../../lib/row-anchor';
+import { transferCounterpartsById } from '../../lib/transfers';
+import { useAppData } from '../../state/useAppData';
+import { AmountCell } from '../../components/AmountCell';
+import { TransactionRow } from './TransactionRow';
 
 interface TransactionListProps {
   /** Already in ledger order (`occurred_on` descending) as `useLedger` sorted them. */
   readonly transactions: readonly Transaction[];
   readonly accounts: readonly Account[];
   readonly categories: readonly Category[];
+  /** Commit an edit. The parent owns the write and the notice it produces. */
+  readonly onSave: (id: string, input: Omit<Transaction, 'id'>) => void;
+  readonly onDelete: (transaction: Transaction) => void;
 }
 
 /**
@@ -31,8 +37,52 @@ interface TransactionListProps {
  * `data-day`, `data-day-count` and `data-day-subtotal` (the raw signed integer)
  * are on the DOM so the grouping and its arithmetic are checkable rather than
  * merely visible.
+ *
+ * ## Phase 4 (edit half) added two things, both about not losing the reader
+ *
+ * **Which row is open** is this component's state and nothing else's: it is a
+ * property of the list, it has no meaning off this screen, and the row that has
+ * it is the one the user just pressed a key on.
+ *
+ * **The scroll anchor.** A saved edit reflows the page — the editor is taller
+ * than the row it replaces, and a changed date can move the row into a different
+ * day group entirely. `captureRowAnchor` measures where the row sat in the
+ * viewport before the commit and a layout effect puts it back at that offset
+ * afterwards, so the reader keeps their place. `data-anchor-shift` records how
+ * many pixels the correction moved the page, which is what turns *"the ledger
+ * keeps its place"* from a claim into a number.
  */
-export function TransactionList({ transactions, accounts, categories }: TransactionListProps) {
+export function TransactionList({
+  transactions,
+  accounts,
+  categories,
+  onSave,
+  onDelete,
+}: TransactionListProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+
+  // The counterpart lookup is built from the WHOLE transaction list, not from
+  // the rows this list was handed: a filter (or an account's own ledger) can
+  // hide one leg of a transfer, and the leg that is still on screen must not
+  // become a mystery because of it. Read straight from the shared state — the
+  // rule in coding-conventions.md is to read from the context, not to copy it.
+  const { transactions: allTransactions } = useAppData();
+  const counterparts = useMemo(
+    () => transferCounterpartsById(allTransactions),
+    [allTransactions],
+  );
+
+  /** Set just before a commit that will reflow the list; consumed by the effect. */
+  const anchorRef = useRef<RowAnchor | null>(null);
+  const [anchorShift, setAnchorShift] = useState<number | null>(null);
+
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current;
+    if (anchor === null) return;
+    anchorRef.current = null;
+    setAnchorShift(restoreRowAnchor(anchor));
+  }, [transactions]);
+
   const accountNames = useMemo(
     () => new Map(accounts.map((account) => [account.id, account.name])),
     [accounts],
@@ -56,8 +106,27 @@ export function TransactionList({ transactions, accounts, categories }: Transact
     return groups;
   }, [transactions]);
 
+  const saveEdit = (id: string, input: Omit<Transaction, 'id'>): void => {
+    // Measure BEFORE the write: after it, the row this is about may have moved
+    // or left the list entirely.
+    anchorRef.current = captureRowAnchor(id);
+    setEditingId(null);
+    onSave(id, input);
+  };
+
+  const deleteRow = (transaction: Transaction): void => {
+    setEditingId(null);
+    onDelete(transaction);
+  };
+
   return (
-    <div data-transaction-list="">
+    <div
+      data-transaction-list=""
+      data-editing-id={editingId ?? ''}
+      data-anchor-shift={anchorShift === null ? '' : String(anchorShift)}
+    >
+      <p className="px-4 pb-2 text-xs text-ink-faint">{rowCopy.listHint}</p>
+
       {days.map((day) => {
         // Integer addition in minor units. VND is exponent 0: nothing to scale,
         // nothing to round, and no float ever touches this.
@@ -82,40 +151,21 @@ export function TransactionList({ transactions, accounts, categories }: Transact
 
             <ol>
               {day.rows.map((txn, index) => (
-                <li
+                <TransactionRow
                   key={txn.id}
-                  data-transaction-id={txn.id}
-                  data-occurred-on={txn.occurred_on}
-                  // Alternating fill, so a long day still reads row by row.
-                  className={`grid grid-cols-[1fr_200px_170px] items-center gap-5 rounded-row px-4 py-2.5 ${
-                    index % 2 === 0 ? 'bg-surface-raised' : ''
-                  }`}
-                >
-                  <span className="flex items-center gap-2.5 text-[15px]">
-                    <span
-                      aria-hidden="true"
-                      className={`size-2 shrink-0 rounded-pill ${categoryDotClass(txn.category_id, categories)}`}
-                    />
-                    {txn.description}
-                  </span>
-
-                  <span className="text-[13px] text-ink-muted">
-                    {txn.category_id === null ? (
-                      // `null` is a first-class state, not missing data — so it
-                      // is named, in the accent, rather than left blank.
-                      <span className="font-medium text-brand">{ledgerCopy.uncategorized}</span>
-                    ) : (
-                      categoryNames.get(txn.category_id)
-                    )}
-                    {' · '}
-                    {accountNames.get(txn.account_id) ?? ledgerCopy.unknownAccount}
-                  </span>
-
-                  <AmountCell
-                    amountMinor={txn.amount_minor}
-                    className="text-right text-base font-semibold"
-                  />
-                </li>
+                  transaction={txn}
+                  counterpart={counterparts.get(txn.id) ?? null}
+                  accounts={accounts}
+                  categories={categories}
+                  accountNames={accountNames}
+                  categoryNames={categoryNames}
+                  striped={index % 2 === 0}
+                  editing={editingId === txn.id}
+                  onEdit={setEditingId}
+                  onCancelEdit={() => setEditingId(null)}
+                  onSave={saveEdit}
+                  onDelete={deleteRow}
+                />
               ))}
             </ol>
           </section>

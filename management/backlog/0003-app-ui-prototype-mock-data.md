@@ -167,6 +167,49 @@ The prototype honors the money contract from CLAUDE.md and the field names pinne
   **Filter interaction handled rather than ignored:** saving a row that the active filter excludes shows *"Đã lưu … nhưng không khớp bộ lọc đang bật"* plus a **Xóa bộ lọc** button, and **never silently widens the filter**. Rejected auto-clearing (throws away the subset the Owner asked for) and silence (reads as data loss).
   **Agent's own call, flagged not buried:** **description is required** — the ticket did not say so. Rationale: a row with no description *and* no category is untriageable in phase 5. One-line change in `draftToTransaction` if the Owner disagrees.
   **Where it still feels slow — the agent's observation after ~100 entries, and the most valuable part of the report:** the description is the whole cost and gets no help; **recent-description autocomplete would cut a repeat entry to 2–3 keys and is the biggest remaining win by a wide margin.** Vietnamese input makes the real number higher than 11 (`Cà phê` is ~8 Telex keystrokes for 6 characters) and the design does nothing about it. Categorizing during entry is slower than skipping — the `<select>` needs Tab plus arrows and first-letter matching collides in Vietnamese (`Cà phê`/`Chợ & siêu thị`) — **so phase 5's inbox will carry more volume than this ticket assumes.** The amount preview sits bottom-left where the eye never goes at speed, and it is the one affordance that catches a 100× typo.
+- **Phase 4 (edit/delete half) — DONE 2026-08-27.** Phase 4 is now complete.
+
+  **Files:** new `src/routes/ledger/{EntryFields,EntryFeedback,RowEditor,TransactionRow}.tsx` + `ordering.ts`, `src/lib/row-anchor.ts`, `src/components/UndoBar.tsx`; `AmountCell.tsx` and `category-color.ts` **moved** to `src/components/` (triage is the second consumer); `src/lib/money.ts` (`formatAmountDigits`), `quick-entry.ts` (`draftFromTransaction`), `src/state/AppData*` (`updateTransaction`, `assignCategories`, `removeTransaction`, `restoreTransaction`). **`LedgerFilters.tsx` is not in the modified set** — PM-verified against `git status`.
+
+  **Three calls the ticket left open, and the reasoning is the valuable part:**
+  1. **Undo, not a confirmation dialog.** A dialog taxes the 99 correct deletions to protect the 100th, and by then it is dismissed unread. It is also the only one of the two that meets the keyboard requirement — focus lands on `Hoàn tác` the instant the bar appears, so recovery is one `Enter`. **No timer:** an expiring window is a race between reading what happened and losing the way to reverse it.
+  2. **The row is the control.** Per-row edit and delete buttons would be **112 tab stops** on a 56-row ledger. `Tab` reaches the row, `Enter` edits, `Delete` removes.
+  3. **Edit and entry share one code path**, not a lookalike — one `EntryFields`, one `draftToTransaction`. That is *why* a decimal cannot be refused on entry and quietly coerced on edit: there is no second parser to drift.
+
+  **Evidence — Playwright 14/14, build `✓ 1958 modules · ✓ 232ms`** (PM re-ran the build; `✓ 240ms`).
+  - **11 keystrokes held** after the extraction, re-measured with real key events — not assumed unchanged.
+  - **Rejection keeps its reason:** `30,5` → `DECIMAL_NOT_ALLOWED`, rendered *"Số tiền phải là số nguyên đồng — không có phần thập phân."*, row unchanged at `-1.250.000.000 ₫`, and a sweep of 105 rendered amounts found **0** coerced values.
+  - **The strongest number in the run:** a row edited at viewport top **316** — with its *date* changed so it re-sorted into a different day group — was still at viewport top **316** after the save, `data-anchor-shift` recording the 604px the page moved underneath it.
+  - **Delete + undo = 2 keystrokes**, 56→55→56, and the row returned **at index 2 with the same neighbours** — position recovered from the comparator, not a stored index. Zero dialog elements on the page.
+
+- **Phase 5 — DONE 2026-08-27.** The uncategorised triage inbox.
+
+  **Files:** new `src/routes/triage/{TriageView.tsx,category-keys.ts}`; `src/App.tsx` (route), `src/AppShell.tsx` (the header badge 0005 left as a status **is now a `NavLink`**), `src/copy/strings.ts`.
+
+  **Interaction model — one listbox, one tab stop, digit keys.** `1`–`9` bind to categories **by position in the name-ordered list**, the same ordering the colour swatches derive from, so no `shortcut` field enters `src/data/` and no key goes stale on a rename. `↑↓` move a cursor, `Shift`+arrows extend, `Space` toggles, `A` all, `Esc` clears. **A digit applies to the selection if there is one, otherwise to the row under the cursor** — one rule, two speeds. Categories past the ninth get no key and the legend renders `—` rather than lying.
+
+  **Measured:** **N rows one at a time = N keystrokes** — the assigned row leaves the inbox so the next falls under the cursor by itself; the cursor is never moved and `Tab` is never pressed. **N rows in one batch = 2 keystrokes** (`A`, digit), measured at **N = 12**, and undo returned all 12 to `null`. The list takes focus on arrival: **zero clicks to start**.
+
+  **Money, Node against the real module: 26/26.** `formatAmountDigits` round-trips through `parseAmount` for 0, ±1, ±30000, −2.200.000, −1.250.000.000 — **PM re-ran this**; it is unsigned by design, so direction stays the toggle's business and a round-trip cannot silently flip a sign.
+
+  ### The PM got a number wrong, and the agent refused to make it true
+
+  My brief told the agent *"the fixtures already carry 22 uncategorised rows."* **They carry 4** — `node -e` over `transactions.json`: 56 total, 4 uncategorised. The 22 came from theme C's artboard, where it is a *mockup* badge, and I passed it on as fixture data.
+
+  The agent checked, found `src/data/README.md` states four is deliberate (*"enough to batch-clear and still see the count change"*) with that count quoted in several closed phases' evidence, and **did not edit the fixtures to match my brief** — which would have silently invalidated closed evidence and rewritten data-law on a sub-agent's authority. It built for the batch case anyway, because the finding behind the number was sound, and **measured it at N = 12** by adding 8 rows through quick entry with real keystrokes.
+
+  Raising fixture volume is a real option, but it is a fixture change **plus** a README update, and it invalidates the "4 uncategorised / 9 matching `ca phe`" counts that closed phases quote. Owner's call, not folded in.
+
+  ### Carried, not folded in
+
+  - **Pre-existing, from phase 4's first half:** the quick-entry amount **preview** takes its colour from the direction toggle, so a preview of `0` renders red while the saved row renders neutral. One line to correct; left alone as out of scope.
+  - **Known keyboard edge:** editing a row while a filter is active such that the edit excludes it — the row leaves the list and focus has nowhere to return. The row is safe and the bar says so, but the caret is lost.
+  - **`formatAmountDigits` is new public surface on the money module** — grouped, unsigned, symbol-free, no scaling, no `toFixed`. It exists so opening a row and saving it untouched cannot alter a stored value. Flagged because money-module surface is contract-adjacent.
+  - **Doc edits are law edits, and were declared:** `design-system.md` (shared-components table, rule 9 *no confirmation dialogs*, rule 10 *one evidence attribute one scope*, a measured-keyboard-paths table) and `architecture/01-overview.md` (`/triage` in the Shape, the five state mutators, entry speed extended to editing).
+  - The agent flagged two dirty files under `management/` that it had not touched. **That was the PM**, rewriting ticket 0004 off its dead MSW premise while this ran. Correct instinct: report what you did not do rather than investigate outside your fence.
+
+  **Harness delta — four, folded into `.claude/agents/app.md` in the same change:** `toHaveAttribute` does not normalize whitespace where `toHaveText` does, so U+00A0 must be explicit in attribute assertions; **`page.goto` re-seeds and signs out** on a prototype with no persistence, so a spec must stay on one page load — *and this one gets more dangerous when `api` lands*, because `goto` starts working and yesterday's habit passes for the wrong reason; `Control+a` is not select-all on macOS (`ControlOrMeta+a`); and `node --experimental-strip-types` only runs `money.ts` directly because it imports nothing — anything above it needs its imports flattened first.
+
 - Phase 5: `<files, evidence>`
 - Phase 6: `<files, evidence>`
 - **Harness delta (strip):** three, and the first one **corrects a claim this workspace had been repeating.**

@@ -14,11 +14,15 @@
  *   - `category_id: 'none'` means uncategorized
  *   - `q` is case- and diacritic-insensitive, so `ca phe` finds `Cà phê`
  *   - ledger order is `occurred_on` descending, then `id` descending
+ *
+ * **The two comparators moved to `./ordering.ts`** when phase 5's triage inbox
+ * became a second consumer of the same orders — see that file.
  */
 
 import { useMemo } from 'react';
 import type { Account, Category, Transaction } from '../../data/types';
 import { useAppData } from '../../state/useAppData';
+import { byLedgerOrder, byName } from './ordering';
 
 /** Every field is a string because every field comes from a form control. */
 export interface LedgerFilters {
@@ -90,18 +94,6 @@ function fold(value: string): string {
     .toLowerCase();
 }
 
-/**
- * Ledger order: `occurred_on` descending (most recent first), then `id`
- * descending so rows sharing a date have a stable, deterministic order rather
- * than whatever order they happened to be seeded in.
- */
-function byLedgerOrder(a: Transaction, b: Transaction): number {
-  if (a.occurred_on !== b.occurred_on) {
-    return a.occurred_on < b.occurred_on ? 1 : -1;
-  }
-  return a.id < b.id ? 1 : -1;
-}
-
 function matches(txn: Transaction, filters: LedgerFilters, needle: string | null): boolean {
   const from = filters.from.trim();
   const to = filters.to.trim();
@@ -155,14 +147,8 @@ export function useLedger(filters: LedgerFilters): LedgerData {
   }, [transactions, filters]);
 
   // Reference data, ordered once for both the filter controls and the row labels.
-  const sortedAccounts = useMemo(
-    () => [...accounts].sort((a, b) => a.name.localeCompare(b.name, 'vi')),
-    [accounts],
-  );
-  const sortedCategories = useMemo(
-    () => [...categories].sort((a, b) => a.name.localeCompare(b.name, 'vi')),
-    [categories],
-  );
+  const sortedAccounts = useMemo(() => [...accounts].sort(byName), [accounts]);
+  const sortedCategories = useMemo(() => [...categories].sort(byName), [categories]);
 
   const filterQuery = useMemo(() => searchParamsFromFilters(filters).toString(), [filters]);
 

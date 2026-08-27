@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useAuth } from './auth/useAuth';
 import { appCopy } from './copy/strings';
+import { needsCategory } from './lib/transfers';
 import { useAppData } from './state/useAppData';
 
 /**
@@ -23,17 +24,25 @@ import { useAppData } from './state/useAppData';
  * the page rather than a claim about the source.
  *
  * **Theme C (ticket 0005):** ochre wordmark, a pill-nav trough, and the
- * uncategorised count as a badge. The badge is a STATUS, not a link — the
- * triage screen it will eventually point at is phase 5 of ticket 0003 and does
- * not exist, and this ticket adds no routes. `data-uncategorized-count` puts the
- * number on the DOM so it is checkable rather than merely visible.
+ * uncategorised count as a badge. `data-uncategorized-count` puts the number on
+ * the DOM so it is checkable rather than merely visible.
+ *
+ * **Phase 5 made that badge a LINK.** Ticket 0005 left it a status only because
+ * there was nowhere to send it — *"the triage screen it will eventually point at
+ * … does not exist"* — and `/triage` now does. The count is live: it is read
+ * off the shared transaction list, so clearing rows in the inbox decrements the
+ * number in the header without either screen telling the other anything.
  */
 export function AppShell() {
   const { user, accountCount, signOut } = useAuth();
   const { transactions } = useAppData();
   const email = user?.email ?? '';
   const initial = email.slice(0, 1).toUpperCase();
-  const uncategorized = transactions.filter((txn) => txn.category_id === null).length;
+  // `needsCategory`, not `category_id === null`: both legs of a transfer are
+  // stored uncategorised and neither can ever be filed under anything, so
+  // counting them here would send the Owner to an inbox holding rows the inbox
+  // refuses to show (ticket 0004 phase 2, `src/lib/transfers.ts`).
+  const uncategorized = transactions.filter(needsCategory).length;
 
   return (
     <div
@@ -59,8 +68,25 @@ export function AppShell() {
             >
               {appCopy.nav.ledger}
             </NavLink>
-            <span
-              className="flex items-center gap-2 rounded-pill px-4 py-1.5 text-sm font-medium text-ink-muted"
+            <NavLink
+              to="/accounts"
+              className={({ isActive }) =>
+                isActive
+                  ? 'rounded-pill bg-surface-raised px-4 py-1.5 text-sm font-semibold text-ink shadow-sm'
+                  : 'rounded-pill px-4 py-1.5 text-sm font-medium text-ink-muted'
+              }
+            >
+              {appCopy.nav.accounts}
+            </NavLink>
+            <NavLink
+              to="/triage"
+              className={({ isActive }) =>
+                `flex items-center gap-2 rounded-pill px-4 py-1.5 text-sm ${
+                  isActive
+                    ? 'bg-surface-raised font-semibold text-ink shadow-sm'
+                    : 'font-medium text-ink-muted'
+                }`
+              }
               data-uncategorized-count={uncategorized}
               title={appCopy.uncategorizedCountLabel.replace('{count}', String(uncategorized))}
             >
@@ -68,7 +94,7 @@ export function AppShell() {
               <Badge className="bg-outflow text-brand-foreground tabular-nums">
                 {uncategorized}
               </Badge>
-            </span>
+            </NavLink>
           </nav>
 
           <div className="ml-auto flex items-center gap-3">

@@ -1,6 +1,6 @@
 [
-  {"id":"acc_cash","name":"Tiền mặt","kind":"cash","opening_balance_minor":2000000},
-  {"id":"acc_vcb","name":"Vietcombank","kind":"bank","opening_balance_minor":18500000},
-  {"id":"acc_momo","name":"Ví Momo","kind":"ewallet","opening_balance_minor":850000},
+  {"id":"acc_cash","name":"Tiền mặt","kind":"cash","opening_balance_minor":3500000},
+  {"id":"acc_vcb","name":"Vietcombank","kind":"bank","opening_balance_minor":1320000000},
+  {"id":"acc_momo","name":"Ví Momo","kind":"ewallet","opening_balance_minor":2000000},
   {"id":"acc_tpb_savings","name":"Tiết kiệm TPBank","kind":"bank","opening_balance_minor":60000000}
 ]

@@ -12,12 +12,15 @@
  * steps and a dash rather than five colours: "no category" can never be read as
  * "some category I don't recognise".
  *
+ * Moved out of `routes/ledger/` alongside `AmountCell` when the triage inbox
+ * (phase 5) became a second consumer of the dashed uncategorised swatch.
+ *
  * The classes are written out as literals because Tailwind scans source text —
  * a class assembled at runtime (`bg-category-${n}`) is a class that never gets
  * generated.
  */
 
-import type { Category } from '../../data/types';
+import type { Category } from '../data/types';
 
 /** The four ramp steps, in order. Tokens live in `src/index.css`. */
 const RAMP = [

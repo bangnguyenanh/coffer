@@ -28,6 +28,23 @@ export interface Account {
    * this plus the account's transactions (hub 0003 contract).
    */
   readonly opening_balance_minor: number;
+  /**
+   * Archived rather than deleted (hub ticket 0004 phase 1).
+   *
+   * An account with transactions cannot be deleted without orphaning history,
+   * so there is no delete on this surface at all. Archiving takes the account
+   * out of the pickers — quick entry and the transfer form offer active
+   * accounts only — while its balance, its rows and its detail page all stay
+   * exactly where they were.
+   *
+   * **It is a field the eventual schema does not have yet.** Hub ticket 0001
+   * pins `accounts` as `id, user_id, name, type, opening_balance_minor,
+   * created_at`; archiving needs one more column and that is flagged to the PM
+   * rather than assumed. In the JSON it may be omitted — `seed.ts` reads a
+   * missing value as `false`, so a fixture row does not have to say "not
+   * archived" to mean it.
+   */
+  readonly archived: boolean;
 }
 
 export interface Category {
@@ -49,6 +66,29 @@ export interface Transaction {
   readonly account_id: string;
   /** `null` means uncategorized — a first-class state, not missing data. */
   readonly category_id: string | null;
+  /**
+   * The transfer this row is one leg of, or `null` for an ordinary transaction.
+   *
+   * **Provisional — the shape is an open ADR** (hub `decisions/CANDIDATES.md`;
+   * hub ticket 0004 phase 2 builds it to inform that decision, not to settle
+   * it). The model here is the **linked pair**: two transactions share one
+   * `transfer_id`, negative in the source account and positive in the
+   * destination. The alternative on the table is a single row carrying a
+   * counter-account column.
+   *
+   * **Whatever the shape ends up being, this field is the exclusion rule.** A
+   * row with a `transfer_id` is money that MOVED, not money spent or earned, so
+   * it is excluded from every spending total and every category breakdown —
+   * and, because a transfer has no category, from the uncategorised count and
+   * the triage inbox too. That rule has exactly one implementation:
+   * `src/lib/transfers.ts`. Nothing re-derives it inline.
+   *
+   * It is `string | null` and NOT optional on purpose: every construction site
+   * has to say which of the two it is, so a new writer cannot forget the field
+   * and silently mint a row that looks like spending. In the JSON it may be
+   * omitted — `seed.ts` reads a missing value as `null`.
+   */
+  readonly transfer_id: string | null;
 }
 
 /**

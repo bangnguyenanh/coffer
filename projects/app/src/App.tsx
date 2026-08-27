@@ -1,7 +1,10 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { AppShell } from './AppShell';
 import { AuthGate } from './auth/AuthGate';
+import { AccountDetailView } from './routes/accounts/AccountDetailView';
+import { AccountsView } from './routes/accounts/AccountsView';
 import { LedgerView } from './routes/ledger/LedgerView';
+import { TriageView } from './routes/triage/TriageView';
 import { LoginView } from './routes/login/LoginView';
 import { SignupView } from './routes/signup/SignupView';
 
@@ -17,6 +20,22 @@ import { SignupView } from './routes/signup/SignupView';
  *   /login, /signup   reachable whenever nobody is signed in
  *   the app           only while signed in — the ledger is the landing route
  *                     until ticket 0004 introduces a dashboard and moves it
+ *   /accounts         balances (DERIVED, never stored) and the transfer form
+ *                     — hub ticket 0004 phases 1 and 2. Transfer entry lives
+ *                     HERE and not on the ledger for two reasons: a transfer is
+ *                     a question about accounts, so the balances it moves are
+ *                     on the same screen and the proof needs no navigation; and
+ *                     a mode toggle on the quick-entry row would have added a
+ *                     tab stop to the measured 11-keystroke entry path, which
+ *                     is a regression the design system does not permit.
+ *   /accounts/:id     one account, its derived balance, and its own ledger.
+ *   /triage           the uncategorised inbox (phase 5). It is a ROUTE and not
+ *                     a filtered ledger because it is a different job with a
+ *                     different keyboard model: the ledger reads and corrects
+ *                     one row at a time, this one assigns a category to many at
+ *                     once. `?category_id=none` on the ledger still exists and
+ *                     still answers "which rows are uncategorised" — this
+ *                     answers "clear them".
  *
  * `/setup` REDIRECTS to `/signup` rather than 404ing. It is a URL this app was
  * shipping last week: it is in the Owner's history, in this ticket's evidence,
@@ -44,6 +63,9 @@ export function App() {
       <Route element={<AuthGate allow="authenticated" />}>
         <Route element={<AppShell />}>
           <Route index element={<LedgerView />} />
+          <Route path="/accounts" element={<AccountsView />} />
+          <Route path="/accounts/:accountId" element={<AccountDetailView />} />
+          <Route path="/triage" element={<TriageView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>
