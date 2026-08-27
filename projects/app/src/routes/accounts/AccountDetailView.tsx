@@ -8,7 +8,7 @@ import type { Transaction } from '../../data/types';
 import { accountBalanceMinor } from '../../lib/account-balance';
 import { formatAmount } from '../../lib/money';
 import { useAppData } from '../../state/useAppData';
-import { byLedgerOrder, byName } from '../ledger/ordering';
+import { byLedgerOrder, byName } from '../../lib/ordering';
 import { TransactionList } from '../ledger/TransactionList';
 
 /**

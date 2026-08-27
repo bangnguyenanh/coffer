@@ -1,6 +1,6 @@
 # Backlog 0003: Coffer web client — prototype core loop on mock data
 
-**Status:** Open  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-22
+**Status:** Done 2026-08-27 — all phases  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-22
 **Epic:** Foundation — first usable expense tracker
 
 ## Context / problem
@@ -211,7 +211,20 @@ The prototype honors the money contract from CLAUDE.md and the field names pinne
   **Harness delta — four, folded into `.claude/agents/app.md` in the same change:** `toHaveAttribute` does not normalize whitespace where `toHaveText` does, so U+00A0 must be explicit in attribute assertions; **`page.goto` re-seeds and signs out** on a prototype with no persistence, so a spec must stay on one page load — *and this one gets more dangerous when `api` lands*, because `goto` starts working and yesterday's habit passes for the wrong reason; `Control+a` is not select-all on macOS (`ControlOrMeta+a`); and `node --experimental-strip-types` only runs `money.ts` directly because it imports nothing — anything above it needs its imports flattened first.
 
 - Phase 5: `<files, evidence>`
-- Phase 6: `<files, evidence>`
+- **Phase 6 — DONE 2026-08-27. The core loop, walked end to end. This closes the ticket.**
+
+  1. Log in → dashboard → `/ledger`: 56 rows, inbox badge 4.
+  2. **Enter without a category** — 18 real keystrokes (`45000` · Tab · `Pho ga trua` · Enter), `data-category-skipped="true"`.
+  3. **See it, correctly formatted** — rows 56→57, `-45.000 ₫` with U+00A0 and no decimal digit, `Chưa phân loại` chip, inbox 4→5, caret back in the amount box.
+  4. **Correct the amount** — 20 Tabs reach the row (one stop per row), `Enter` opens the editor with the caret in the amount box, `-65.000 ₫`, still 57 rows, still uncategorised.
+  5. **Find it by filter** — `trua` → 3 rows, one of them the new one; **ASCII `trua` matched the fixtures' `trưa`**, so diacritic-insensitivity survives. See the bug note below for what else this step found.
+  6. **Categorise from triage** — list focused on arrival, cursor already on `txn_057`, `Ăn uống` is digit `1`: **one keystroke**, inbox 5→4.
+  7. Back on the ledger: `Pho ga trua | Ăn uống · Tiền mặt | -65.000 ₫`.
+
+  Seven screenshots, one per step.
+
+  **Step 5 is also the fourth observation of [bug 0001](../bugs/0001-ledger-filter-drops-keystrokes.md), and it broke the case open** — the trigger is typing *rate*, not the reset button, and there is a **second, deterministic** defect the ticket did not know about: a space is lost at every speed, so a multi-word search cannot be typed at all. The PM then found the mechanism in `useLedger.ts` — `searchParamsFromFilters` trims on every write to the URL. Recorded in the bug, not fixed here.
+
 - **Harness delta (strip):** three, and the first one **corrects a claim this workspace had been repeating.**
   1. **`--dump-dom` did not become usable again once the app mounted synchronously — and the reason the agent doc gave for that was wrong.** The doc blamed the async MSW bootstrap; deleting it changed nothing. `createRoot().render()` commits in a scheduler task *after* the load event, so the load-event snapshot beats React to the DOM on **any React 18+ root**, sync or not. In Chrome 151 `--headless=new` the process also never exits. **The PM predicted the opposite in the delegation brief** — a wrong rationale attached to a right rule is what invited that, which is the general lesson: a rule recorded without its true cause gets relaxed by the next person who thinks the cause is gone.
   2. **No `timeout`/`gtimeout` on this box** — a watchdog around a hanging browser needs a shell loop over `kill -0`, or a tool call burns its whole budget.

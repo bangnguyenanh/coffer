@@ -8,7 +8,7 @@
 
 | ID | Title | Priority | Status | Agents |
 |----|-------|----------|--------|--------|
-| [0001](0001-ledger-filter-drops-keystrokes.md) | Ledger filter box drops keystrokes at typing speed | High | Open — defect confirmed, **trigger not pinned** (two observers saw different triggers) | app |
+| [0001](0001-ledger-filter-drops-keystrokes.md) | Ledger filter box drops keystrokes at typing speed | High | Open — **diagnosed 2026-08-27**. Two defects, one root cause (filter text lives in the URL): a rate-dependent race below ~15ms/char, and a **deterministic space loss** from the `.trim()` in `searchParamsFromFilters` — so a multi-word search cannot be typed at all. Ready to fix | app |
 
 ## Awaiting Owner — commit / deploy / verify
 

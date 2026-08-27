@@ -22,7 +22,7 @@
 import { useMemo } from 'react';
 import type { Account, Category, Transaction } from '../../data/types';
 import { useAppData } from '../../state/useAppData';
-import { byLedgerOrder, byName } from './ordering';
+import { byLedgerOrder, byName } from '../../lib/ordering';
 
 /** Every field is a string because every field comes from a form control. */
 export interface LedgerFilters {

@@ -29,6 +29,11 @@ async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.locator('[data-view="login"][data-status="ready"]')).toBeVisible();
   await page.locator('#login-email').press('Enter');
+  // Ticket 0004 phase 5 moved the landing route: a sign-in now lands on the
+  // DASHBOARD and the ledger is `/ledger`, one client-side click away. A `goto`
+  // would re-seed the prototype and sign it out, so the nav link is the way.
+  await expect(page.locator('[data-view="dashboard"][data-status="ready"]')).toBeVisible();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
 }
 
@@ -127,7 +132,7 @@ test('deleting a category in use reassigns its transactions — it never deletes
   await expect(triage).toHaveAttribute('data-inbox-count', String(inboxAfter));
 
   // And the ledger still holds every row it held before.
-  await page.locator('header a[href="/"]').click();
+  await page.locator('header a[href="/ledger"]').click();
   const ledger = page.locator('[data-view="ledger"][data-status="ready"]');
   await expect(ledger).toBeVisible();
   await expect(ledger.locator('[data-result-count]')).toHaveAttribute(

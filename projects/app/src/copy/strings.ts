@@ -11,6 +11,18 @@ export const appCopy = {
   name: 'Coffer',
   tagline: 'Sổ chi tiêu cá nhân',
   nav: {
+    /**
+     * The landing route since hub ticket 0004 phase 5 — balances and the month,
+     * the two questions the product exists to answer. It is FIRST in the nav
+     * because it is where a sign-in lands.
+     */
+    dashboard: 'Tổng quan',
+    /**
+     * No longer the landing route. Ticket 0003 said so out loud — *"a successful
+     * login lands on the ledger … 0004 introduces the dashboard and moves the
+     * landing route there"* — and phase 5 is where that happened. The ledger is
+     * now `/ledger`.
+     */
     ledger: 'Sổ cái',
     /** Balances, transfers, and archiving — hub ticket 0004 phases 1–2. */
     accounts: 'Tài khoản',
@@ -537,6 +549,38 @@ export const categoriesCopy = {
 export const categoryErrorCopy = {
   NAME_REQUIRED: 'Đặt tên cho danh mục.',
   NAME_TAKEN: 'Đã có danh mục trùng tên.',
+} as const;
+
+/* ---------------------------------------------------------------------------
+ * The dashboard (hub ticket 0004, phase 5) — the landing route.
+ * ------------------------------------------------------------------------- */
+
+export const dashboardCopy = {
+  title: 'Tổng quan',
+  /**
+   * What the screen is for, stated on it. The two questions are the product's
+   * two questions, and they are the two panels below in that order.
+   */
+  subtitle: 'Bạn đang có bao nhiêu, và tháng này tiền đi đâu.',
+
+  /** The balances panel. Active accounts only — archived have their own screen. */
+  balancesTitle: 'Số dư',
+  totalLabel: 'Tổng số dư',
+  /** `{count}` is substituted. */
+  accountCount: '{count} tài khoản đang dùng',
+  /**
+   * Repeated from the accounts screen on purpose: a balance nobody can explain
+   * is a balance nobody trusts, and the dashboard is the screen most likely to
+   * be read without ever opening `/accounts`.
+   */
+  derivedNote: 'Tính từ số dư đầu kỳ cộng các giao dịch — không lưu sẵn ở đâu cả.',
+  openAccounts: 'Quản lý tài khoản và chuyển tiền',
+  openLedger: 'Mở sổ cái',
+  /** `{name}` — one account row's accessible name. */
+  openAccountLabel: 'Mở tài khoản {name}',
+
+  emptyTitle: 'Chưa có tài khoản nào',
+  emptyBody: 'Thêm một tài khoản để bắt đầu theo dõi số dư.',
 } as const;
 
 /* ---------------------------------------------------------------------------

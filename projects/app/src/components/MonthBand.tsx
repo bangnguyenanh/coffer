@@ -1,21 +1,21 @@
 import { useMemo, useState } from 'react';
 import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { AmountCell } from '../../components/AmountCell';
-import { categoryDotClass, UNCATEGORIZED_DOT_CLASS } from '../../components/category-color';
+import { AmountCell } from './AmountCell';
+import { categoryDotClass, UNCATEGORIZED_DOT_CLASS } from './category-color';
 import { Button } from '@/components/ui/button';
-import { monthCopy } from '../../copy/strings';
-import { formatAmount } from '../../lib/money';
-import { currentMonthKey, monthKeyParts, type MonthKey } from '../../lib/calendar-date';
+import { monthCopy } from '../copy/strings';
+import { formatAmount } from '../lib/money';
+import { currentMonthKey, monthKeyParts, type MonthKey } from '../lib/calendar-date';
 import {
   monthsPresent,
   monthSummary,
   spendingByCategory,
   uncategorizedOutMinor,
-} from '../../lib/month-summary';
-import { needsCategory } from '../../lib/transfers';
-import { useAppData } from '../../state/useAppData';
-import { byName } from './ordering';
+} from '../lib/month-summary';
+import { needsCategory } from '../lib/transfers';
+import { useAppData } from '../state/useAppData';
+import { byName } from '../lib/ordering';
 
 /**
  * Theme C's month band — hub ticket 0004 phase 4.
@@ -59,14 +59,30 @@ import { byName } from './ordering';
  * ink. The artboard predates the rule; the accounts screen's spending total
  * already set this precedent in phase 2 and the two must not disagree.
  *
- * ## Where the band lives, and where it is going
+ * ## Where the band lives — TWO screens as of phase 5
  *
- * At the top of the ledger, which is where the artboard puts it. It does NOT
- * respond to the ledger's filters: it is a MONTH summary, and a band that
- * silently re-scoped itself to a filtered subset would be a different number
- * under the same label. Phase 5 moves it onto the dashboard; it stays under
- * `routes/ledger/` until that second consumer actually exists, per the promotion
- * rule in documents/coding-conventions.md.
+ * It was written under `routes/ledger/` and **promoted to `src/components/` in
+ * ticket 0004 phase 5**, when the dashboard became a second consumer — the
+ * promotion rule in documents/coding-conventions.md, which is *shared only once
+ * a second consumer actually exists*.
+ *
+ * **It stayed on the ledger as well as arriving on the dashboard**, and that is
+ * a decision rather than an oversight. The artboard draws it at the top of the
+ * ledger and `design-system.md` §5 records that placement as law; the dashboard
+ * needs it because *"where did the month go"* is one of the two questions a
+ * landing screen owes an answer to. Rendering it twice costs nothing — it reads
+ * the shared state, ignores the ledger's filters, and adds no tab stop, so the
+ * measured 11-keystroke entry path is untouched (re-measured in phase 5).
+ *
+ * It does NOT respond to the ledger's filters: it is a MONTH summary, and a band
+ * that silently re-scoped itself to a filtered subset would be a different
+ * number under the same label.
+ *
+ * **The selected month is per-instance, deliberately.** Two mounted bands keep
+ * two month cursors; stepping to July on the dashboard does not step the
+ * ledger's. Lifting the selection into shared state would make it a third
+ * cross-cutting concern (architecture/01-overview.md → State) for something that
+ * is view state and is discarded on navigation anyway.
  *
  * ## The month picker is not in the ticket, and it is here on purpose
  *

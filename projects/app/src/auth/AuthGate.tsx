@@ -11,7 +11,10 @@
  * ONE redirect is left, and it is the one every signed-in product has:
  *
  *   - a protected route while signed out  -> /login
- *   - /login or /signup while signed in   -> the ledger
+ *   - /login or /signup while signed in   -> `/`, which is the DASHBOARD since
+ *     ticket 0004 phase 5 (it was the ledger until then). The redirect target
+ *     is the route, not the screen — it did not have to change when the landing
+ *     screen did, and that is the point of writing it as `/`.
  *
  * This decides what RENDERS, and nothing else — see AuthProvider's banner.
  */

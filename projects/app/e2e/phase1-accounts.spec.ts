@@ -43,6 +43,11 @@ async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.locator('[data-view="login"][data-status="ready"]')).toBeVisible();
   await page.locator('#login-email').press('Enter');
+  // Ticket 0004 phase 5 moved the landing route: a sign-in now lands on the
+  // DASHBOARD and the ledger is `/ledger`, one client-side click away. A `goto`
+  // would re-seed the prototype and sign it out, so the nav link is the way.
+  await expect(page.locator('[data-view="dashboard"][data-status="ready"]')).toBeVisible();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
 }
 
@@ -197,7 +202,7 @@ test('archiving keeps every row and leaves the entry picker; undo puts it back',
 
   // …and it is gone from the picker quick entry offers. Client-side navigation,
   // so the session survives — a `goto` here would re-seed and prove nothing.
-  await page.locator('header a[href="/"]').click();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
   const options = await page.locator('#entry-account option').allInnerTexts();
   expect(options).not.toContain('Ví Momo');

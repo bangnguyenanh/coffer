@@ -29,6 +29,11 @@ async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.locator('[data-view="login"][data-status="ready"]')).toBeVisible();
   await page.locator('#login-email').press('Enter');
+  // Ticket 0004 phase 5 moved the landing route: a sign-in now lands on the
+  // DASHBOARD and the ledger is `/ledger`, one client-side click away. A `goto`
+  // would re-seed the prototype and sign it out, so the nav link is the way.
+  await expect(page.locator('[data-view="dashboard"][data-status="ready"]')).toBeVisible();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
 }
 

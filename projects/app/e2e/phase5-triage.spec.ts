@@ -26,6 +26,11 @@ async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.locator('[data-view="login"][data-status="ready"]')).toBeVisible();
   await page.locator('#login-email').press('Enter');
+  // Ticket 0004 phase 5 moved the landing route: a sign-in now lands on the
+  // DASHBOARD and the ledger is `/ledger`, one client-side click away. A `goto`
+  // would re-seed the prototype and sign it out, so the nav link is the way.
+  await expect(page.locator('[data-view="dashboard"][data-status="ready"]')).toBeVisible();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
 }
 
@@ -199,7 +204,7 @@ test('a triaged row leaves the inbox and shows its category on the ledger', asyn
   await expect(page.locator(`[data-triage-list] [data-transaction-id="${id}"]`)).toHaveCount(0);
 
   // Back on the ledger: same row, same amount, no longer "Chưa phân loại".
-  await page.locator('nav a[href="/"]').click();
+  await page.locator('nav a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
   const row = page.locator(`[data-transaction-id="${id}"]`);
   await expect(row).toHaveCount(1);

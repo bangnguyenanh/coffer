@@ -1,6 +1,6 @@
 # Backlog 0004: Coffer web client — accounts, transfers, and month insight
 
-**Status:** In progress — phases 1–4 done 2026-08-27, phase 5 next  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-22
+**Status:** Done 2026-08-27 — all five phases  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-22
 **Epic:** Foundation — first usable expense tracker
 
 ## Context / problem
@@ -137,6 +137,24 @@ Inherits the money contract from CLAUDE.md and the field names pinned in 0001:
 
   **Build `✓ 229ms`, Playwright 31/31 (9 new, 22 pre-existing, no regressions), Node money 23/23, Node month arithmetic 16/16.** PM re-ran the build and re-derived the August and July figures from the fixtures.
 
+- **Phase 5 — DONE 2026-08-27. The dashboard is the landing route, and the walkthrough closes this ticket.**
+
+  **Files:** new `src/routes/dashboard/DashboardView.tsx`, `e2e/walkthrough-0004-dashboard.spec.ts`; **promoted** `MonthBand.tsx` → `src/components/` and `ordering.ts` → `src/lib/` (six consumers across four route folders); changed `App.tsx`, `AppShell.tsx`, `AuthGate.tsx`, the four route views, and all seven pre-existing specs for the route move.
+
+  **The walkthrough, as observed behaviour:**
+
+  1. Log in — prefilled, **one `Enter`, nothing typed**.
+  2. **Land on the dashboard** — total `184.141.000 ₫` across 4 accounts, and the August band `{in 25.200.000, out −7.460.000, net 17.740.000, 17 txns}`. No `+` on the positive total.
+  3. Transfer ₫500.000 VCB → Momo, **13 real keystrokes, no mouse**.
+  4. **Both balances moved, spending did not:** `vcb 122.221.000 → 121.721.000`, `momo 770.000 → 1.270.000`, **total 184.141.000 → 184.141.000**, month out −7.460.000 unchanged, 17 txns unchanged, inbox badge still 4. `data-month-transfer-legs` 0→2 is the only figure that moves.
+  5. Spending-by-category: 8 segments `toEqual`-identical, nothing of magnitude 500.000 in either sign, segments still sum exactly to the month's out.
+
+  `wt-0004-5-dashboard-after-1280.png` carries the whole claim in one frame: both moved balances, the unchanged total, a pixel-identical band.
+
+  **Quick entry re-measured after the route move: still 11 keystrokes.** Reaching `/ledger` costs a nav *click*, not a key.
+
+  **Build `✓ 229ms`, Playwright 35/35, Node money 51/51, fixtures 56 / 4 intact** — PM re-verified the counts and the build.
+
 ### Decisions the ticket did not specify
 
 1. **Transfer entry lives on `/accounts`, not on the ledger row.** A source/destination mode on quick entry would add a tab stop to the measured 11-keystroke path — a regression that needs the Owner. On the accounts screen it also sits beside the two balances it moves, which is why the proof fits in one frame.
@@ -151,6 +169,13 @@ Inherits the money contract from CLAUDE.md and the field names pinned in 0001:
 7. **Three deliberate departures from the artboard**, each in service of a design-system rule the artboard predates: **no `+`** on net (Owner-gated); the headline spend and legend amounts keep their **real sign and outflow colour** through `AmountCell` rather than being unsigned magnitudes in muted ink, because sign→colour lives in one component and the accounts screen set that precedent in phase 2; and **no "Khác" bucket**, which is what lets "the segments sum to the month's out" be exact rather than approximate.
 8. **The band ignores the ledger's filters.** A month summary that silently re-scoped to a filtered subset would be a different number under the same label.
 9. **Duplicate category names refused case-insensitively, diacritics preserved** — deliberately *not* the ledger search's diacritic-folding: a searcher is guessing, an author is not, and in Vietnamese the diacritics are the word.
+**From phase 5:**
+
+11. **The band renders on the dashboard AND stays on the ledger** — which is what makes it a genuine second consumer and the promotion legitimate. Removing it from the ledger would contradict the artboard, void phase 4's closed evidence, and is a law edit the agent correctly refused to make alone.
+12. **The month cursor is per-instance** — two mounted bands keep two selections, rather than adding a third cross-cutting concern for view state that navigation discards.
+13. **The dashboard computes nothing** — balances via `account-balance.ts`, month via `MonthBand`. There is no dashboard-specific arithmetic that could disagree with `/accounts`.
+14. **Account rows show name and balance only, no kind.** That line per account is the difference between the band's *"why triage is worth opening"* sentence sitting on the landing screen or below the fold.
+
 10. **The fixtures' month spread is now load-bearing**, recorded in `src/data/README.md`: re-dating or categorising `txn_033` silently removes the only month where the band's acceptance line fires.
 
 ### For `api` — two fields ticket 0001's schema does not have

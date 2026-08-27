@@ -29,6 +29,11 @@ async function signIn(page: Page): Promise<void> {
   await page.goto('/login');
   await expect(page.locator('[data-view="login"][data-status="ready"]')).toBeVisible();
   await page.locator('#login-email').press('Enter');
+  // Ticket 0004 phase 5 moved the landing route: a sign-in now lands on the
+  // DASHBOARD and the ledger is `/ledger`, one client-side click away. A `goto`
+  // would re-seed the prototype and sign it out, so the nav link is the way.
+  await expect(page.locator('[data-view="dashboard"][data-status="ready"]')).toBeVisible();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
 }
 
@@ -149,7 +154,7 @@ test('the ledger renders a transfer as movement, and triage never offers it', as
     '2',
   );
 
-  await page.locator('header a[href="/"]').click();
+  await page.locator('header a[href="/ledger"]').click();
   const ledger = page.locator('[data-view="ledger"][data-status="ready"]');
   await expect(ledger).toBeVisible();
 
@@ -210,7 +215,7 @@ test('deleting one leg deletes the pair, and undo restores both', async ({ page 
   await page.locator('[data-action="save-transfer"]').click();
   await expect(view).toHaveAttribute('data-transfer-leg-count', '2');
 
-  await page.locator('header a[href="/"]').click();
+  await page.locator('header a[href="/ledger"]').click();
   await expect(page.locator('[data-view="ledger"][data-status="ready"]')).toBeVisible();
 
   // Press Delete on ONE leg.

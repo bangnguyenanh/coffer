@@ -1,6 +1,6 @@
 # Bug 0001: The ledger's filter box drops keystrokes at typing speed
 
-**Status:** Open  ·  **Severity:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-26
+**Status:** Open — **diagnosed 2026-08-27**  ·  **Severity:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-26
 **Found in:** [Backlog 0003](../backlog/0003-app-ui-prototype-mock-data.md) phase 3, by the `app` agent while building phase 4
 
 ## What happens
@@ -36,6 +36,47 @@ Worth checking while in there: whether the same stale-base pattern affects the o
 Every verification pass for phases 1, 2, 2b and 3 **set input values** (native value setter + a synthetic `input` event) rather than **typing** them. Injection delivers one atomic state change and structurally cannot produce the race. Phase 4's harness was the first to send real `Input.dispatchKeyEvent` keystrokes, and it found the defect immediately, three phases late.
 
 **Folded into `.claude/agents/app.md`:** on a product whose stated feature is typing speed, at least one path per text input must be driven as real keystrokes, not injected values.
+
+## Fourth observation, 2026-08-27 — reproduced, and it is TWO defects
+
+Observed during [0003](../backlog/0003-app-ui-prototype-mock-data.md) phase 6's walkthrough, in a run whose **control (`#entry-description`, plain `useState`) lost nothing across five runs.**
+
+**(a) The race — and the trigger is typing RATE, not the reset button.** Ten real keystrokes into `#filter-q` per speed:
+
+```
+ 0ms/char   filter  0/10 ""             control 10/10
+ 5ms/char   filter  4/10 "zzzz"         control 10/10
+15ms/char   filter 10/10 "zzzzzzzzzz"   control 10/10
+40ms/char   filter 10/10 "zzzzzzzzzz"   control 10/10
+```
+
+The 5 ms figure varies run to run (2, 3, 4, 5 of 10) — which is what a race looks like, and **it explains the whole disagreement in this ticket's history**: two observers saw different triggers and a third could not reproduce it, because they were typing at different speeds. It disappears above ~15 ms/char. **The "after clicking reset" trigger is dead** — it was never the trigger.
+
+**(b) A second, DETERMINISTIC loss this ticket did not know about.** A query containing a **space** loses that space at *every* speed, including speeds where ten consecutive characters arrive intact:
+
+```
+"pho ga" at 20ms/char    -> "phoga"
+"pho ga" at 120ms/char, x3 -> "phoga", "phoga", "phoga"
+"a b" into #filter-q      -> 40ms:"ab"   120ms:"ab"
+"a b" into #entry-description -> 40ms:"a b"  120ms:"a b"   (control)
+```
+
+A deterministic loss is not a race. **Consequence: a multi-word ledger search cannot be typed at all** — on a product whose stated feature is typing speed.
+
+## Mechanism — PM read the code, and (b) is fully explained
+
+`useLedger.ts:74-78`, `searchParamsFromFilters`:
+
+```ts
+const value = filters[key].trim();
+if (value !== '') params.set(key, value);
+```
+
+**Every write to the URL trims.** `LedgerFilters.set()` builds the next state from `value`, which is read back out of the URL (`read('q')`). So the moment a space is the *last* character typed, it is trimmed away before it can be read back — and the next keystroke lands on the trimmed string. `"pho "` becomes `"pho"`, then `g` makes `"phog"`. An interior space can never survive being, for one keystroke, a trailing one.
+
+That same round-trip through asynchronous router state is the race in (a): a keystroke arriving before the router commits the previous one is computed from a stale base and overwrites its predecessor.
+
+**Both defects are the same root cause — filter text lives in the URL — and the trim makes one of them deterministic.**
 
 ## Fix bar
 

@@ -1,12 +1,12 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { MonthBand } from '../../components/MonthBand';
 import { UndoBar } from '../../components/UndoBar';
 import { ledgerCopy, rowCopy } from '../../copy/strings';
 import type { Transaction } from '../../data/types';
 import { formatAmount } from '../../lib/money';
 import { useAppData } from '../../state/useAppData';
 import { LedgerFilters } from './LedgerFilters';
-import { MonthBand } from './MonthBand';
 import { QuickEntry } from './QuickEntry';
 import { TransactionList } from './TransactionList';
 import {

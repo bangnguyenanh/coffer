@@ -8,7 +8,7 @@ import { categoriesCopy, categoryErrorCopy } from '../../copy/strings';
 import type { Category } from '../../data/types';
 import { useAppData } from '../../state/useAppData';
 import type { CategoryRemoval } from '../../state/AppDataContext';
-import { byName } from '../ledger/ordering';
+import { byName } from '../../lib/ordering';
 import { categoryKeyForIndex } from '../triage/category-keys';
 import {
   categoryDraftFrom,

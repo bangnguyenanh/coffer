@@ -27,7 +27,12 @@ import { useAppData } from './state/useAppData';
  * uncategorised count as a badge. `data-uncategorized-count` puts the number on
  * the DOM so it is checkable rather than merely visible.
  *
- * **Phase 5 made that badge a LINK.** Ticket 0005 left it a status only because
+ * **Ticket 0004 phase 5 added the dashboard to the nav, first**, and moved the
+ * ledger to `/ledger`. The order of the pills is the order of the questions:
+ * how much do I have, then what happened, then the reference data, then what
+ * still needs filing.
+ *
+ * **Phase 5 of ticket 0003 made that badge a LINK.** Ticket 0005 left it a status only because
  * there was nowhere to send it — *"the triage screen it will eventually point at
  * … does not exist"* — and `/triage` now does. The count is live: it is read
  * off the shared transaction list, so clearing rows in the inbox decrements the
@@ -58,8 +63,24 @@ export function AppShell() {
           </span>
 
           <nav className="flex items-center gap-1 rounded-pill bg-inset-strong p-1">
+            {/*
+              `end` is load-bearing on this one and on this one only: without it
+              `/` matches every path below it and the dashboard pill would read
+              as active on every screen in the app.
+            */}
             <NavLink
               to="/"
+              end
+              className={({ isActive }) =>
+                isActive
+                  ? 'rounded-pill bg-surface-raised px-4 py-1.5 text-sm font-semibold text-ink shadow-sm'
+                  : 'rounded-pill px-4 py-1.5 text-sm font-medium text-ink-muted'
+              }
+            >
+              {appCopy.nav.dashboard}
+            </NavLink>
+            <NavLink
+              to="/ledger"
               className={({ isActive }) =>
                 isActive
                   ? 'rounded-pill bg-surface-raised px-4 py-1.5 text-sm font-semibold text-ink shadow-sm'

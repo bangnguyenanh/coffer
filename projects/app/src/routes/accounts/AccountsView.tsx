@@ -11,7 +11,7 @@ import { formatAmount } from '../../lib/money';
 import { isTransfer, spendingRowCount, spendingTotalMinor } from '../../lib/transfers';
 import type { TransferPair } from '../../state/AppDataContext';
 import { useAppData } from '../../state/useAppData';
-import { byName } from '../ledger/ordering';
+import { byName } from '../../lib/ordering';
 import { AccountForm } from './AccountForm';
 import { TransferEntry } from './TransferEntry';
 import {

@@ -4,6 +4,7 @@ import { AuthGate } from './auth/AuthGate';
 import { AccountDetailView } from './routes/accounts/AccountDetailView';
 import { AccountsView } from './routes/accounts/AccountsView';
 import { CategoriesView } from './routes/categories/CategoriesView';
+import { DashboardView } from './routes/dashboard/DashboardView';
 import { LedgerView } from './routes/ledger/LedgerView';
 import { TriageView } from './routes/triage/TriageView';
 import { LoginView } from './routes/login/LoginView';
@@ -19,8 +20,16 @@ import { SignupView } from './routes/signup/SignupView';
  * gone.
  *
  *   /login, /signup   reachable whenever nobody is signed in
- *   the app           only while signed in — the ledger is the landing route
- *                     until ticket 0004 introduces a dashboard and moves it
+ *   /                 THE DASHBOARD, and the landing route since ticket 0004
+ *                     phase 5. Balances plus the month summary: the two
+ *                     questions this product exists to answer — *how much do I
+ *                     have* and *where did the month go* — both above the fold,
+ *                     with everything else a route away.
+ *   /ledger           the ledger, which USED to be `/`. It answers a third
+ *                     question — *what happened* — one row at a time, and it is
+ *                     where entry, correction and filtering live. It is one
+ *                     click from the landing screen and it kept every one of
+ *                     its measured keyboard paths; only its path changed.
  *   /accounts         balances (DERIVED, never stored) and the transfer form
  *                     — hub ticket 0004 phases 1 and 2. Transfer entry lives
  *                     HERE and not on the ledger for two reasons: a transfer is
@@ -70,7 +79,8 @@ export function App() {
 
       <Route element={<AuthGate allow="authenticated" />}>
         <Route element={<AppShell />}>
-          <Route index element={<LedgerView />} />
+          <Route index element={<DashboardView />} />
+          <Route path="/ledger" element={<LedgerView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/accounts/:accountId" element={<AccountDetailView />} />
           <Route path="/categories" element={<CategoriesView />} />

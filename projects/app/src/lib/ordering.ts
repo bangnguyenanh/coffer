@@ -7,10 +7,17 @@
  * comparator is how they quietly stop sorting the same way. One comparator, two
  * consumers — the same reasoning that made `matchesFilters` an export.
  *
+ * **It moved again in ticket 0004 phase 5**, out of `routes/ledger/` and into
+ * `src/lib/`. By then it had six consumers across four route folders plus a
+ * shared component (`components/MonthBand.tsx`), and a shared component reaching
+ * back INTO a route folder for a comparator inverts the layering the
+ * architecture doc describes. Same promotion rule as `AmountCell` and
+ * `MonthBand`, one level lower: these are rules, not UI.
+ *
  * Nothing here formats, filters or slices; these are ordering rules only.
  */
 
-import type { Transaction } from '../../data/types';
+import type { Transaction } from '../data/types';
 
 /**
  * Ledger order: `occurred_on` descending (most recent first), then `id`

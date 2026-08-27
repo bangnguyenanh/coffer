@@ -15,7 +15,7 @@ import { formatCalendarDate } from '../../lib/calendar-date';
 import { formatAmount } from '../../lib/money';
 import { needsCategory } from '../../lib/transfers';
 import { useAppData } from '../../state/useAppData';
-import { byLedgerOrder, byName } from '../ledger/ordering';
+import { byLedgerOrder, byName } from '../../lib/ordering';
 import { categoryKeyForIndex, indexForCategoryKey } from './category-keys';
 
 /**
@@ -88,7 +88,7 @@ export function TriageView() {
 
   /**
    * The inbox: `category_id === null`, in the same order the ledger shows them.
-   * One comparator, shared — see `ledger/ordering.ts`.
+   * One comparator, shared — see `src/lib/ordering.ts`.
    */
   const rows = useMemo(
     // A transfer leg is stored uncategorised and can never BE categorised —
