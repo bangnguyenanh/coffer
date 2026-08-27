@@ -35,7 +35,9 @@ Coffer is the demo app for a recorded series. The episode plan is not background
 
 On 2026-08-26 this workspace spent six hours of agent time on `app`, including a full visual re-skin, while `api` stayed empty. It did that because nothing in this file told it the episodes existed.
 
-**The one live exception, and it is scoped.** On 2026-08-26 the Owner directed UI completion ahead of `api`: install shadcn/ui and build the design system on theme C. That override is [ADR 0005](decisions/0005-design-system-shadcn-theme-c.md) and it authorises exactly one ticket — [backlog 0005](backlog/0005-app-design-system-shadcn-theme-c.md). It expires when 0005 closes; it does not reopen `app` polish in general, and it does not move episode 2 off `api`.
+**The exception, and it is now SPENT.** On 2026-08-26 the Owner directed UI completion ahead of `api` ([ADR 0005](decisions/0005-design-system-shadcn-theme-c.md)), and on 2026-08-27 extended it to *"hoàn thiện toàn bộ ui trong phiên này"*. That override covered exactly four items, and **all four are closed**: [0005](backlog/0005-app-design-system-shadcn-theme-c.md) design system, [0003](backlog/0003-app-ui-prototype-mock-data.md) core loop, [0004](backlog/0004-app-prototype-accounts-transfers-insight.md) accounts/transfers/insight, and [bug 0001](bugs/0001-ledger-filter-drops-keystrokes.md).
+
+**So the rule above is live again, at full strength.** `projects/api/` still holds a README and nothing else, and episode 2's entire subject is that folder. The next `app` ticket needs an answer to *"which episode is this for?"* that survives contact with an empty `api` — and after a session that closed the whole client, *"one more UI thing"* is the least convincing answer available.
 
 ## Core rule
 
