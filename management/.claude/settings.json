@@ -13,6 +13,30 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/turn-end-check.sh\"",
+            "timeout": 90,
+            "statusMessage": "turn-end: money contract + typecheck"
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PROJECT_DIR/.claude/hooks/turn-end-check.sh\"",
+            "timeout": 90,
+            "statusMessage": "turn-end: money contract + typecheck"
+          }
+        ]
+      }
     ]
   }
 }

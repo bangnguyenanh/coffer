@@ -106,6 +106,10 @@ Enforced mechanically today — `.claude/hooks/post-edit-check.sh`, PostToolUse 
 - **R1** no divide-by-100 · **R2** no `toFixed` — the money contract, on every edit under `projects/app/src`. Comment lines are skipped, so the money module can document the rule without tripping it.
 - **TC** `tsc -b` typecheck.
 
+Enforced mechanically since 2026-08-27 — `.claude/hooks/turn-end-check.sh`, on **`Stop` and `SubagentStop`**: the same three rules, once per turn, over whatever `git status` says the turn actually changed.
+
+**Why the second hook exists, and it is the more important half.** `PostToolUse` matches `Write|Edit`. This harness tells agents to edit through **Bash** under bypass-permissions — and a Bash edit fires no such matcher, so it skipped the gate entirely. Ticket 0005 changed fourteen source files that way and the checks ran only because the agent *remembered* to invoke the script by hand. The per-edit hook is still the better one — it fails faster and closer to the mistake — but the turn-end hook is what makes the guarantee true regardless of which tool did the writing.
+
 So "build green" is no longer something an agent *proves*; it is something an agent **cannot avoid**. Quote the result line; do not re-run it as ritual.
 
 ### Use the tool that exists. Do not build one.
@@ -115,6 +119,8 @@ Behaviour is observed with **Playwright** — the loop this project already demo
 **A defect in your instrument is not a ticket.** The tell that this rule is breaking: *a ticket's evidence section grows longer than its implementation section.* When that happens, verification has quietly become the work, and the project changed without anyone deciding to.
 
 If the available tool cannot verify something, the answer is to **report it unverified** — not to build the thing that could.
+
+**Driving the app while another ticket holds `e2e/`.** A paused or in-flight ticket can own `playwright.config.ts` and `e2e/`, and a second agent must not write into them. It does not have to: put the config in the scratchpad and symlink the project's modules next to it — `ln -sfn <app>/node_modules <scratchdir>/node_modules`. Node resolves `@playwright/test` from the **config's** directory, not from cwd, so without that symlink the run dies with `MODULE_NOT_FOUND` before a single test executes. One line, and a dirty tree stops blocking verification. *(Learned in 0003 phase 2c, 2026-08-27.)*
 
 ## Good enough? — the governor
 
