@@ -18,14 +18,17 @@ Two consequences a future agent must **not** "fix":
 **What ADR 0004 does *not* change: this surface's boundary, above.** It is a *data-model* decision, binding on `api` — `user_id` on every table, every query scoped. It buys the client nothing at runtime. Concretely, all of the following still hold and must not be "fixed" in the ADR's name:
 
 - **Still no network, no persistence, no hashing here.** ADR 0004 explicitly does not put the product on the internet; real auth (hashing, session storage, transport, TLS) arrives with the hosting decision and an `ops` gate.
-- **A reload re-seeds to *zero* accounts** — accounts are session state and are not in `src/data/`, so there is nothing to re-seed *from*. "Multi-user is now official" is **not** a reason to reach for `localStorage`; that is the wrong inference and the easiest one to draw.
+- **A reload re-seeds to exactly *one* account, and it is a fixture** — `src/auth/prototype-account.ts` (Owner directive 2026-08-27), seeded so the Owner stops signing up before every look at a screen. Anything signed up during a session is still gone on refresh: accounts are session state and are not in `src/data/`. **Seeding is not persistence and is not a step towards it** — that file is deleted in episode 2, when a real `api` brings bcrypt and a database. "Multi-user is now official" is still **not** a reason to reach for `localStorage`; that is the wrong inference and the easiest one to draw.
+- **The seeded account is an ordinary account.** It goes into the same list and the same password map sign up writes to, and no code branches on it — signing up again on its address fails `email_taken` like any other duplicate. A fresh load is still `anonymous` and still lands on the login screen; the fields are **prefilled, never bypassed**.
 - The ADR also buys no organizations, teams, roles, sharing, invitations, or admin surface. The unit is a person.
 
 Rules elsewhere in this file that describe an API are marked **suspended pending the `api` surface**. They are not wrong and they are not deleted — they simply have no referent yet, and they return with a real backend.
 
 ## Shape
 
-`routed views → feature components → shared React state → JSON fixtures in src/data/`.
+`routes → auth gate → routed views → feature components → shared React state → JSON fixtures in src/data/`.
+
+**The auth gate is part of the shape, not a detail inside a view.** Every route in `src/App.tsx` sits inside an `AuthGate` — `/login` and `/signup` in the anonymous branch, everything else in the authenticated one — so "which screen may render at all" is answered by the tree before a view is reached, and no view checks it for itself. The shell (`src/AppShell.tsx`) is mounted inside the authenticated branch, which is why it may assume somebody is signed in.
 
 A typed API client returns as the single place `fetch` appears when the `api` surface lands; until then, a component reaching for `fetch` is a bug — there is nothing on the other end of it.
 
@@ -60,4 +63,6 @@ Transaction entry is the screen that decides whether this tool survives. Keyboar
 
 Tailwind utilities; shared design tokens over ad-hoc values. No inline magic numbers where a token exists.
 
-*Last updated: 2026-08-25 (auth state corrected from a boolean to an accounts list + current-user id with per-account credentials; multi-account model recorded as settled law per hub ADR 0004, with the no-network / no-persistence boundary explicitly unchanged by it) — keep this stamp current in the same edit that changes content.*
+**The tokens, the component vocabulary and the rules that are not negotiable live in [`documents/design-system.md`](../design-system.md)** (hub ADR 0005: shadcn/ui on theme C · "Ấm"). Read it before adding a screen. Two of its rules are the ones that break things quietly if ignored: money is always tabular-numeral and always rendered through `src/lib/money.ts`, and a colour literal outside `src/index.css` is a bug.
+
+*Last updated: 2026-08-27 (ticket 0005: the "Shape" line named no auth gate — corrected, with the gate placed in the tree where it actually sits; Styling now points at the new `design-system.md`. Earlier the same day: the "reload re-seeds to zero accounts" line was made false by hub ticket 0003 phase 2c — one prototype-fixture account is now seeded and the login form is prefilled with it; recorded together with what it deliberately does not change: no persistence, no auto-sign-in, no special case in the provider) — keep this stamp current in the same edit that changes content.*

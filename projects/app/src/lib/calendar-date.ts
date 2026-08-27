@@ -32,6 +32,30 @@ export function formatCalendarDate(value: CalendarDate): string {
   return dateFormatter.format(new Date(Number(year), Number(month) - 1, Number(day)));
 }
 
+const dayHeadingFormatter = new Intl.DateTimeFormat('vi-VN', {
+  weekday: 'long',
+  day: 'numeric',
+  month: 'long',
+});
+
+/**
+ * `2026-08-22` -> `Thứ Bảy, 22 tháng 8` — the heading over a ledger day group
+ * (ticket 0005, theme C).
+ *
+ * The year is deliberately absent: a day group sits inside a list that is
+ * already ordered by date, and the row itself still carries the full date in
+ * `data-occurred-on`. Same local-time construction as `formatCalendarDate`, for
+ * the same reason — a UTC parse renders the previous day west of Greenwich.
+ */
+export function formatDayHeading(value: CalendarDate): string {
+  const match = CALENDAR_DATE.exec(value);
+  if (match === null) {
+    throw new TypeError(`Expected a calendar date in YYYY-MM-DD form; received ${value}`);
+  }
+  const [, year, month, day] = match;
+  return dayHeadingFormatter.format(new Date(Number(year), Number(month) - 1, Number(day)));
+}
+
 /** Is this string a calendar date? The type guard the entry form validates with. */
 export function isCalendarDate(value: string): value is CalendarDate {
   return CALENDAR_DATE.test(value);

@@ -7,10 +7,12 @@ import {
   type FormEvent,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import type { Account, Category, Transaction } from '../../data/types';
 import { amountErrorCopy, entryErrorCopy, quickEntryCopy } from '../../copy/strings';
 import { todayCalendarDate } from '../../lib/calendar-date';
-import { formatAmount } from '../../lib/money';
+import { CURRENCY_SYMBOL, formatAmount } from '../../lib/money';
 import { useAppData } from '../../state/useAppData';
 import {
   DEFAULT_DIRECTION,
@@ -45,6 +47,20 @@ import {
  *
  * No formatting and no parsing happens in this file — both go through
  * `src/lib/money.ts`, and the rules go through `./quick-entry.ts`.
+ *
+ * ## Theme C (ticket 0005) — what changed, and what deliberately did not
+ *
+ * ONE ROW: a direction pill, an oversized tabular amount on a ruled line, the
+ * description, the account chip, the dashed "chưa phân loại" chip, the date, and
+ * the ochre `Lưu`. Labels are still rendered — as `sr-only`, so the accessible
+ * name of every control survives a layout that has no room for visible ones.
+ *
+ * **Entry speed is the acceptance test, not the look** (ADR 0005). So none of
+ * the behaviour moved: same DOM order, therefore the same tab order; the amount
+ * box still autofocuses; the selects are still NATIVE `<select>` elements, which
+ * is why `Enter` still submits from anywhere in the row and why arrow keys still
+ * pick an option without opening a popper. Swapping them for a Radix listbox
+ * would have cost keystrokes, and a slower entry path is a regression.
  */
 interface QuickEntryProps {
   readonly accounts: readonly Account[];
@@ -54,9 +70,15 @@ interface QuickEntryProps {
   readonly onClearFilters: () => void;
 }
 
-const FIELD_CLASS =
-  'w-full rounded-md border border-border-subtle bg-surface-raised px-2 py-1.5 text-sm text-ink';
-const LABEL_CLASS = 'block text-xs font-medium text-ink-muted';
+/** A chip-shaped native control: pill ground, no browser chrome, one tab stop. */
+const CHIP_CLASS =
+  'appearance-none rounded-pill bg-inset px-3.5 py-1.5 text-[13px] font-medium text-ink outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
+/** The same chip while the category is skipped — dashed, per theme C. */
+const CHIP_DASHED_CLASS =
+  'appearance-none rounded-pill border border-dashed border-dash bg-transparent px-3.5 py-1.5 text-[13px] text-ink-muted outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
+/** A field that is a ruled line rather than a box. */
+const LINE_CLASS =
+  'w-full border-0 border-b-2 bg-transparent px-1 outline-none focus-visible:border-b-brand';
 
 interface SavedNotice {
   readonly transaction: Transaction;
@@ -200,11 +222,21 @@ export function QuickEntry({
     return toggleLabel.replace('{current}', current).replace('{other}', other);
   }, [draft.direction]);
 
+  const outflowActive = draft.direction === 'outflow';
+  /** One segment of the direction pill. The active one carries its own colour. */
+  const segment = (active: boolean, tone: 'outflow' | 'inflow'): string =>
+    active
+      ? `rounded-pill px-3.5 py-1 text-[13px] font-semibold text-brand-foreground ${
+          tone === 'outflow' ? 'bg-outflow' : 'bg-inflow'
+        }`
+      : 'rounded-pill px-3.5 py-1 text-[13px] font-medium text-ink-muted';
+
   return (
     <form
       onSubmit={submit}
       onKeyDown={onKeyDown}
       noValidate
+      className="panel px-5 py-4.5"
       data-quick-entry=""
       data-direction={draft.direction}
       data-amount-minor={preview.ok ? String(preview.amountMinor) : ''}
@@ -214,44 +246,39 @@ export function QuickEntry({
       data-category-skipped={draft.category_id === '' ? 'true' : 'false'}
       data-saved-id={saved?.transaction.id ?? ''}
       data-saved-visible={saved === null ? '' : String(saved.visible)}
-      className="rounded-lg border border-border-subtle bg-surface-raised p-4"
       aria-labelledby="quick-entry-legend"
     >
-      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-        <h2
-          id="quick-entry-legend"
-          className="text-xs font-medium uppercase tracking-wide text-ink-muted"
+      <h2 id="quick-entry-legend" className="sr-only">
+        {quickEntryCopy.legend}
+      </h2>
+
+      {/* ONE row. The DOM order IS the tab order, and it is the order the
+          hands expect: amount, description, category, account, date, save. */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        {/* Direction: one tab stop, one key to flip. Two segments are drawn,
+            but this is a single toggle button — clicking either flips it, so
+            the control's behaviour is exactly what it was. */}
+        <button
+          type="button"
+          data-direction-toggle=""
+          aria-label={directionLabel}
+          onClick={toggleDirection}
+          className="flex shrink-0 items-center gap-0.5 rounded-pill bg-inset p-[3px] outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
         >
-          {quickEntryCopy.legend}
-        </h2>
-        <p className="text-xs text-ink-muted">{quickEntryCopy.hint}</p>
-      </div>
+          <span className={segment(outflowActive, 'outflow')}>
+            {quickEntryCopy.direction.outflow}
+          </span>
+          <span className={segment(!outflowActive, 'inflow')}>
+            {quickEntryCopy.direction.inflow}
+          </span>
+        </button>
 
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-12">
-        {/* Direction: one tab stop, one key to flip. */}
-        <div className="lg:col-span-2">
-          <span className={LABEL_CLASS}>{quickEntryCopy.direction.legend}</span>
-          <button
-            type="button"
-            data-direction-toggle=""
-            aria-label={directionLabel}
-            onClick={toggleDirection}
-            className={`mt-0.5 w-full rounded-md border px-2 py-1.5 text-sm font-medium ${
-              draft.direction === 'outflow'
-                ? 'border-outflow text-outflow'
-                : 'border-inflow text-inflow'
-            }`}
-          >
-            {draft.direction === 'outflow'
-              ? quickEntryCopy.direction.outflow
-              : quickEntryCopy.direction.inflow}
-          </button>
-        </div>
-
-        <div className="lg:col-span-3">
-          <label className={LABEL_CLASS} htmlFor="entry-amount">
+        {/* Amount — the biggest thing on the row, because it is the field the
+            caret starts in and the one a 100x typo hides in. */}
+        <div className="flex min-w-[8.5rem] flex-1 items-baseline gap-2 border-b-2 border-field-line px-1 pt-0.5 pb-1.5 focus-within:border-brand">
+          <Label htmlFor="entry-amount" className="sr-only">
             {quickEntryCopy.amount}
-          </label>
+          </Label>
           <input
             id="entry-amount"
             ref={amountRef}
@@ -265,16 +292,20 @@ export function QuickEntry({
             placeholder={quickEntryCopy.amountPlaceholder}
             aria-invalid={errorFor('amount') !== null}
             aria-describedby="entry-amount-status"
-            className={`${FIELD_CLASS} tabular-nums`}
+            className="w-full border-0 bg-transparent text-[28px] leading-[34px] font-semibold tracking-[-0.02em] tabular-nums text-ink outline-none placeholder:text-ink-faint/60"
             value={draft.amount}
             onChange={(event) => setAmount(event.target.value)}
           />
+          {/* The symbol comes from the money module, never typed here. */}
+          <span aria-hidden="true" className="text-[17px] text-ink-faint">
+            {CURRENCY_SYMBOL}
+          </span>
         </div>
 
-        <div className="lg:col-span-4">
-          <label className={LABEL_CLASS} htmlFor="entry-description">
+        <div className="flex min-w-[8rem] flex-[1.6] flex-col">
+          <Label htmlFor="entry-description" className="sr-only">
             {quickEntryCopy.description}
-          </label>
+          </Label>
           <input
             id="entry-description"
             ref={descriptionRef}
@@ -283,7 +314,7 @@ export function QuickEntry({
             autoComplete="off"
             placeholder={quickEntryCopy.descriptionPlaceholder}
             aria-invalid={errorFor('description') !== null}
-            className={FIELD_CLASS}
+            className={`${LINE_CLASS} border-field-line-soft py-1.5 text-base text-ink placeholder:text-ink-faint/60`}
             value={draft.description}
             onChange={(event) =>
               setDraft((current) => ({ ...current, description: event.target.value }))
@@ -291,15 +322,16 @@ export function QuickEntry({
           />
         </div>
 
-        <div className="lg:col-span-3">
-          <label className={LABEL_CLASS} htmlFor="entry-category">
+        <div className="shrink-0">
+          <Label htmlFor="entry-category" className="sr-only">
             {quickEntryCopy.category}
-          </label>
+          </Label>
           <select
             id="entry-category"
             ref={categoryRef}
             name="category_id"
-            className={FIELD_CLASS}
+            title={quickEntryCopy.categoryHint}
+            className={draft.category_id === '' ? CHIP_DASHED_CLASS : CHIP_CLASS}
             value={draft.category_id}
             onChange={(event) =>
               setDraft((current) => ({ ...current, category_id: event.target.value }))
@@ -316,16 +348,16 @@ export function QuickEntry({
           </select>
         </div>
 
-        <div className="lg:col-span-4">
-          <label className={LABEL_CLASS} htmlFor="entry-account">
+        <div className="shrink-0">
+          <Label htmlFor="entry-account" className="sr-only">
             {quickEntryCopy.account}
-          </label>
+          </Label>
           <select
             id="entry-account"
             ref={accountRef}
             name="account_id"
             aria-invalid={errorFor('account_id') !== null}
-            className={FIELD_CLASS}
+            className={CHIP_CLASS}
             value={draft.account_id}
             onChange={(event) =>
               setDraft((current) => ({ ...current, account_id: event.target.value }))
@@ -339,17 +371,17 @@ export function QuickEntry({
           </select>
         </div>
 
-        <div className="lg:col-span-3">
-          <label className={LABEL_CLASS} htmlFor="entry-date">
+        <div className="shrink-0">
+          <Label htmlFor="entry-date" className="sr-only">
             {quickEntryCopy.date}
-          </label>
+          </Label>
           <input
             id="entry-date"
             ref={dateRef}
             name="occurred_on"
             type="date"
             aria-invalid={errorFor('occurred_on') !== null}
-            className={`${FIELD_CLASS} tabular-nums`}
+            className="rounded-pill bg-inset px-3 py-1.5 text-[13px] tabular-nums text-ink-muted outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
             value={draft.occurred_on}
             onChange={(event) =>
               setDraft((current) => ({ ...current, occurred_on: event.target.value }))
@@ -357,39 +389,39 @@ export function QuickEntry({
           />
         </div>
 
-        <div className="flex items-end lg:col-span-2">
-          <button
-            type="submit"
-            data-action="save-transaction"
-            className="w-full rounded-md bg-brand px-3 py-1.5 text-sm font-medium text-surface-raised"
-          >
-            {quickEntryCopy.submit}
-          </button>
-        </div>
-
-        <p className="text-xs text-ink-muted lg:col-span-3">{quickEntryCopy.categoryHint}</p>
+        <Button
+          type="submit"
+          data-action="save-transaction"
+          className="h-10 shrink-0 rounded-pill px-5 text-sm font-semibold"
+        >
+          {quickEntryCopy.submit}
+        </Button>
       </div>
 
-      {/* One live region for both halves of "what will be stored": the preview
-          while it parses, the reason while it does not. */}
-      <p id="entry-amount-status" className="mt-3 text-xs" aria-live="polite">
-        {preview.ok ? (
-          <span className="text-ink-muted">
-            {quickEntryCopy.previewLabel}{' '}
-            <span
-              data-amount-preview-value=""
-              data-direction={draft.direction}
-              className={`font-medium tabular-nums ${
-                draft.direction === 'outflow' ? 'text-outflow' : 'text-inflow'
-              }`}
-            >
-              {formatAmount(preview.amountMinor)}
+      {/* The keyboard contract on the left, what will be stored on the right.
+          One live region for both halves of the second: the preview while the
+          amount parses, a blank while it does not. */}
+      <div className="mt-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <p className="text-xs text-ink-faint">{quickEntryCopy.hint}</p>
+        <p id="entry-amount-status" className="text-xs" aria-live="polite">
+          {preview.ok ? (
+            <span className="text-ink-muted">
+              {quickEntryCopy.previewLabel}{' '}
+              <span
+                data-amount-preview-value=""
+                data-direction={draft.direction}
+                className={`font-semibold tabular-nums ${
+                  draft.direction === 'outflow' ? 'text-outflow' : 'text-inflow'
+                }`}
+              >
+                {formatAmount(preview.amountMinor)}
+              </span>
             </span>
-          </span>
-        ) : (
-          <span className="text-ink-muted">&nbsp;</span>
-        )}
-      </p>
+          ) : (
+            <span className="text-ink-muted">&nbsp;</span>
+          )}
+        </p>
+      </div>
 
       {errors.length > 0 && (
         <ul className="mt-2 space-y-1" role="alert" data-entry-errors="">
@@ -420,7 +452,7 @@ export function QuickEntry({
               <button
                 type="button"
                 data-action="clear-filters-for-saved"
-                className="font-medium text-brand underline underline-offset-2"
+                className="font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
                 onClick={() => {
                   onClearFilters();
                   focusAmount();

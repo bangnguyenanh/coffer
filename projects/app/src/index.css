@@ -1,15 +1,197 @@
+/* Be Vietnam Pro — theme C's typeface (ADR 0005). Must stay the first rule in
+   the file: a CSS `@import` is only legal before other statements. */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap');
 @import 'tailwindcss';
 
-/* Design tokens. Components reference these, never raw hex or magic numbers. */
-@theme {
-  --color-surface: oklch(0.98 0.004 260);
-  --color-surface-raised: oklch(1 0 0);
-  --color-border-subtle: oklch(0.9 0.006 260);
-  --color-ink: oklch(0.25 0.02 260);
-  --color-ink-muted: oklch(0.55 0.015 260);
-  --color-brand: oklch(0.52 0.13 250);
+/* ---------------------------------------------------------------------------
+ * THE TOKEN LAYER — theme C · "Ấm" (hub ADR 0005).
+ *
+ * ONE palette, defined ONCE, in `:root` below. Everything else in this file is
+ * a NAME pointing at it:
+ *   - shadcn/ui's variables (`--background`, `--primary`, `--border`, …), so a
+ *     vendored primitive is already wearing theme C the moment it is added;
+ *   - the app's own names (`--color-surface`, `--color-outflow`, …), which the
+ *     screens have used since ticket 0003 and which keep their meaning.
+ * There is no second palette to drift against. Changing a colour means editing
+ * exactly one line in `:root`.
+ *
+ * No raw hex, and no colour literal outside this file. Components reference
+ * utilities (`bg-surface-raised`, `text-outflow`), never values.
+ *
+ * LIGHT ONLY. Dark mode is an unmade Owner decision (ADR 0005 §3) and this file
+ * does not make it. The `dark` variant below is REDEFINED — not scaffolded — to
+ * a `.dark` ancestor class that this app never sets, which is what welds the
+ * switch off: Tailwind's built-in `dark:` follows `prefers-color-scheme`, so
+ * without this line shadcn's `dark:` utilities would fire on anyone whose OS is
+ * in dark mode and half-theme the app. There is no `.dark` block anywhere.
+ * ------------------------------------------------------------------------- */
+@custom-variant dark (&:is(.dark *));
 
-  /* Sign is shown, not assumed — one token per direction, both surfaces agree. */
-  --color-outflow: oklch(0.55 0.19 25);
-  --color-inflow: oklch(0.52 0.14 155);
+:root {
+  /* ---- Ground & panels ---------------------------------------------------
+   * Measured off the artboard (decisions/assets/0005-theme-c-ledger.html), not
+   * re-eyeballed. */
+  --ground: oklch(0.975 0.012 78);          /* the page: warm cream */
+  --panel: oklch(0.995 0.004 78);           /* raised card / ledger row fill */
+  --panel-border: oklch(0.915 0.012 78);
+  --inset: oklch(0.955 0.012 78);           /* chip / control ground */
+  --inset-strong: oklch(0.945 0.014 78);    /* the pill-nav trough */
+  --rule: oklch(0.93 0.01 78);              /* hairline inside a panel */
+
+  /* ---- Ink --------------------------------------------------------------- */
+  --ink: oklch(0.26 0.02 55);
+  --ink-muted: oklch(0.55 0.015 60);
+  --ink-faint: oklch(0.62 0.015 60);        /* the ₫ suffix, the hint line */
+
+  /* ---- Brand (ochre) — links, primary button, the "chưa phân loại" word --- */
+  --brand: oklch(0.48 0.1 68);
+  --brand-hover: oklch(0.38 0.1 68);
+  --brand-foreground: oklch(0.99 0.004 78); /* text ON brand/outflow/inflow */
+  --brand-wash: oklch(0.9 0.03 72);         /* avatar chip ground */
+
+  /* ---- Direction — sign IS direction (hub money contract) ----------------- */
+  --outflow: oklch(0.53 0.18 25);
+  --inflow: oklch(0.5 0.13 158);
+
+  /* ---- Field lines — theme C underlines an input instead of boxing it ----- */
+  --field-line: oklch(0.86 0.02 75);        /* the focused/primary field */
+  --field-line-soft: oklch(0.93 0.012 78);
+  --dash: oklch(0.85 0.02 75);              /* dashed pill border */
+  --dash-strong: oklch(0.68 0.06 72);       /* dashed category dot */
+
+  /* ---- Category ramp — ONE hue, four steps -------------------------------
+   * Uncategorised is deliberately NOT on this ramp: it is a dashed swatch, so
+   * "no category" can never be mistaken for a category. */
+  --category-1: oklch(0.55 0.11 72);
+  --category-2: oklch(0.65 0.09 72);
+  --category-3: oklch(0.74 0.07 72);
+  --category-4: oklch(0.83 0.05 72);
+
+  /* ---- Radii ------------------------------------------------------------- */
+  --radius: 0.625rem;                       /* 10px — ledger rows, buttons, inputs */
+
+  /* ---- shadcn/ui's names, resolved to the palette above ------------------- */
+  --background: var(--ground);
+  --foreground: var(--ink);
+  --card: var(--panel);
+  --card-foreground: var(--ink);
+  --popover: var(--panel);
+  --popover-foreground: var(--ink);
+  --primary: var(--brand);
+  --primary-foreground: var(--brand-foreground);
+  --secondary: var(--inset);
+  --secondary-foreground: var(--ink);
+  --muted: var(--inset);
+  --muted-foreground: var(--ink-muted);
+  /* shadcn's `--accent` is a hover GROUND, not the brand colour. The brand is
+     `--primary`; conflating the two is how a whole UI turns ochre. */
+  --accent: var(--inset);
+  --accent-foreground: var(--ink);
+  --destructive: var(--outflow);
+  --border: var(--panel-border);
+  --input: var(--panel-border);
+  --ring: var(--brand);
+}
+
+@theme inline {
+  /* Typeface. Numerals are tabular wherever money is shown — see the `num`
+     utility below and documents/design-system.md. */
+  --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+
+  /* Content column — the artboard's 1040px measure. */
+  --container-content: 1040px;
+
+  /* --- shadcn utility names --- */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  /* --- the app's own names, on the SAME palette --- */
+  --color-surface: var(--ground);
+  --color-surface-raised: var(--panel);
+  --color-border-subtle: var(--panel-border);
+  --color-inset: var(--inset);
+  --color-inset-strong: var(--inset-strong);
+  --color-rule: var(--rule);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-brand: var(--brand);
+  --color-brand-hover: var(--brand-hover);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-wash: var(--brand-wash);
+  /* Names kept verbatim from ticket 0003 — the screens already speak them and
+     both surfaces agree on what they mean. */
+  --color-outflow: var(--outflow);
+  --color-inflow: var(--inflow);
+  --color-field-line: var(--field-line);
+  --color-field-line-soft: var(--field-line-soft);
+  --color-dash: var(--dash);
+  --color-dash-strong: var(--dash-strong);
+  --color-category-1: var(--category-1);
+  --color-category-2: var(--category-2);
+  --color-category-3: var(--category-3);
+  --color-category-4: var(--category-4);
+
+  /* --- radii --- */
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-panel: 16px;   /* cards and panels */
+  --radius-row: 10px;     /* a ledger row */
+  --radius-pill: 999px;   /* chips, the direction toggle, Lưu */
+}
+
+/* A panel: the raised 16px surface every screen is built out of — the quick
+   entry bar, the filter toolbar, the auth card, an empty state. It is a utility
+   rather than a shadcn `Card` because three of those four are FORM elements
+   (`<form>`, `<fieldset>`), which a component that renders a `<div>` cannot be. */
+@utility panel {
+  border-radius: var(--radius-panel);
+  background: var(--panel);
+  border: 1px solid var(--panel-border);
+}
+
+/* The eyebrow: the small uppercase label above a number or a day group.
+   11px/16, 600, 0.1em tracking, ink-muted — one definition, per the artboard. */
+@utility eyebrow {
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink-muted);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }

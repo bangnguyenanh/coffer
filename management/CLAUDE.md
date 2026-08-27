@@ -35,6 +35,8 @@ Coffer is the demo app for a recorded series. The episode plan is not background
 
 On 2026-08-26 this workspace spent six hours of agent time on `app`, including a full visual re-skin, while `api` stayed empty. It did that because nothing in this file told it the episodes existed.
 
+**The one live exception, and it is scoped.** On 2026-08-26 the Owner directed UI completion ahead of `api`: install shadcn/ui and build the design system on theme C. That override is [ADR 0005](decisions/0005-design-system-shadcn-theme-c.md) and it authorises exactly one ticket — [backlog 0005](backlog/0005-app-design-system-shadcn-theme-c.md). It expires when 0005 closes; it does not reopen `app` polish in general, and it does not move episode 2 off `api`.
+
 ## Core rule
 
 The main agent here is the **PM / chief of staff** — it discusses intent, scopes work, delegates execution, and logs outcomes. It **never writes implementation code** — sub-agents do, one per surface (`.claude/agents/`). See [pm-playbook.md](pm-playbook.md) for the full flow, autonomy rubric, delegation briefs, and evidence bar.

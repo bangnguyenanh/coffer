@@ -1,0 +1,157 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700&display=swap">
+  <style>
+    html, body { margin: 0; background: oklch(0.975 0.012 78); }
+    .c {
+      font-family: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
+      background: oklch(0.975 0.012 78);
+      color: oklch(0.26 0.02 55);
+      -webkit-font-smoothing: antialiased;
+    }
+    .c .num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+    .c .eyebrow { font-size: 11px; line-height: 16px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: oklch(0.55 0.015 60); }
+    .c .lrow { display: grid; grid-template-columns: 1fr 150px 170px; gap: 20px; align-items: center; padding: 11px 16px; border-radius: 10px; }
+    a { color: oklch(0.48 0.1 68); } a:hover { color: oklch(0.38 0.1 68); }
+  </style>
+</helmet>
+
+<div class="c" style="width: 1280px; min-height: 1060px; display: flex; flex-direction: column;">
+
+  <!-- header -->
+  <div style="max-width: 1040px; width: 100%; box-sizing: border-box; margin: 0 auto; padding: 22px 32px 0; display: flex; align-items: center; gap: 18px;">
+    <span style="font-size: 21px; line-height: 28px; font-weight: 700; letter-spacing: -0.02em; color: oklch(0.48 0.1 68);">Coffer</span>
+    <div style="display: flex; align-items: center; gap: 4px; padding: 4px; border-radius: 999px; background: oklch(0.945 0.014 78);">
+      <span style="font-size: 14px; font-weight: 600; padding: 6px 16px; border-radius: 999px; background: oklch(0.995 0.004 78); box-shadow: 0 1px 2px rgb(80 60 20 / 0.08);">Sổ cái</span>
+      <span style="display: flex; align-items: center; gap: 7px; font-size: 14px; font-weight: 500; padding: 6px 16px; border-radius: 999px; color: oklch(0.5 0.015 60);">Phân loại <span class="num" style="font-size: 12px; font-weight: 600; padding: 1px 7px; border-radius: 999px; background: oklch(0.53 0.18 25); color: oklch(0.99 0.004 78);">22</span></span>
+    </div>
+    <div style="margin-left: auto; display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 13px; color: oklch(0.55 0.015 60);">kevin@coffer.com</span>
+      <span style="width: 32px; height: 32px; border-radius: 999px; background: oklch(0.9 0.03 72); color: oklch(0.42 0.1 68); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 600;">K</span>
+    </div>
+  </div>
+
+  <div style="max-width: 1040px; width: 100%; box-sizing: border-box; margin: 0 auto; padding: 26px 32px 40px;">
+
+    <!-- month band -->
+    <div style="border-radius: 16px; background: oklch(0.995 0.004 78); border: 1px solid oklch(0.915 0.012 78); padding: 24px 28px;">
+      <div style="display: flex; align-items: flex-end; gap: 40px;">
+        <div>
+          <span class="eyebrow">Tháng 8 · 2026</span>
+          <div style="display: flex; align-items: baseline; gap: 10px; margin-top: 2px;">
+            <span class="num" style="font-size: 40px; line-height: 46px; font-weight: 700; letter-spacing: -0.03em; color: oklch(0.53 0.18 25);">15.423.000 ₫</span>
+            <span style="font-size: 14px; color: oklch(0.55 0.015 60);">đã chi</span>
+          </div>
+        </div>
+        <div style="display: flex; gap: 36px; padding-bottom: 6px;">
+          <div>
+            <span class="eyebrow">Đã thu</span>
+            <div class="num" style="font-size: 19px; line-height: 26px; font-weight: 600; color: oklch(0.5 0.13 158);">26.400.000 ₫</div>
+          </div>
+          <div>
+            <span class="eyebrow">Chênh lệch</span>
+            <div class="num" style="font-size: 19px; line-height: 26px; font-weight: 600;">+10.977.000 ₫</div>
+          </div>
+          <div>
+            <span class="eyebrow">Giao dịch</span>
+            <div class="num" style="font-size: 19px; line-height: 26px; font-weight: 600;">25</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- where the month went: one hue, one bar -->
+      <div style="margin-top: 20px; display: flex; gap: 3px; height: 12px;">
+        <div style="width: 52.6%; border-radius: 6px 0 0 6px; background: repeating-linear-gradient(135deg, oklch(0.88 0.02 72) 0 5px, oklch(0.93 0.014 78) 5px 10px); border: 1px dashed oklch(0.72 0.05 72); box-sizing: border-box;"></div>
+        <div style="width: 32.4%; background: oklch(0.55 0.11 72);"></div>
+        <div style="width: 7.8%; background: oklch(0.65 0.09 72);"></div>
+        <div style="width: 3.6%; background: oklch(0.74 0.07 72);"></div>
+        <div style="width: 3.6%; border-radius: 0 6px 6px 0; background: oklch(0.83 0.05 72);"></div>
+      </div>
+      <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center;">
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 3px; border: 1px dashed oklch(0.72 0.05 72); background: oklch(0.91 0.018 75);"></span>Chưa phân loại <span class="num" style="color: oklch(0.55 0.015 60);">8.113.000 ₫</span></span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: oklch(0.55 0.11 72);"></span>Hóa đơn <span class="num" style="color: oklch(0.55 0.015 60);">5.000.000 ₫</span></span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: oklch(0.65 0.09 72);"></span>Sức khỏe <span class="num" style="color: oklch(0.55 0.015 60);">1.200.000 ₫</span></span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: oklch(0.74 0.07 72);"></span>Chợ &amp; siêu thị <span class="num" style="color: oklch(0.55 0.015 60);">550.000 ₫</span></span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px;"><span style="width: 10px; height: 10px; border-radius: 3px; background: oklch(0.83 0.05 72);"></span>Khác <span class="num" style="color: oklch(0.55 0.015 60);">560.000 ₫</span></span>
+      </div>
+      <div style="margin-top: 16px; padding-top: 14px; border-top: 1px solid oklch(0.93 0.01 78); display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 14px;">Hơn một nửa chi tiêu tháng này chưa biết đi đâu.</span>
+        <span style="display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: oklch(0.42 0.1 68);">Phân loại 22 giao dịch
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <!-- quick entry -->
+    <div style="margin-top: 20px; border-radius: 16px; background: oklch(0.995 0.004 78); border: 1px solid oklch(0.915 0.012 78); padding: 18px 20px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; padding: 3px; border-radius: 999px; background: oklch(0.955 0.012 78);">
+          <span style="font-size: 13px; font-weight: 600; padding: 5px 14px; border-radius: 999px; background: oklch(0.53 0.18 25); color: oklch(0.99 0.004 78);">Chi</span>
+          <span style="font-size: 13px; font-weight: 500; padding: 5px 14px; border-radius: 999px; color: oklch(0.55 0.015 60);">Thu</span>
+        </div>
+        <div class="num" style="flex-grow: 1; display: flex; align-items: baseline; gap: 8px; border-bottom: 2px solid oklch(0.86 0.02 75); padding: 2px 4px 6px;">
+          <span style="font-size: 28px; line-height: 34px; font-weight: 600; letter-spacing: -0.02em;">30.000</span>
+          <span style="font-size: 17px; color: oklch(0.62 0.015 60);">₫</span>
+        </div>
+        <div style="flex-grow: 2; border-bottom: 2px solid oklch(0.93 0.012 78); padding: 6px 4px 8px; font-size: 16px;">Cơm trưa</div>
+        <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; font-weight: 500; padding: 7px 14px; border-radius: 999px; background: oklch(0.955 0.012 78);">Tiền mặt</span>
+        <span style="display: inline-flex; align-items: center; gap: 7px; font-size: 13px; padding: 7px 14px; border-radius: 999px; border: 1px dashed oklch(0.85 0.02 75); color: oklch(0.55 0.015 60);">chưa phân loại</span>
+        <span class="num" style="font-size: 13px; color: oklch(0.55 0.015 60);">26/08</span>
+        <span style="display: inline-flex; align-items: center; height: 40px; padding: 0 20px; border-radius: 999px; background: oklch(0.48 0.1 68); color: oklch(0.99 0.004 78); font-size: 14px; font-weight: 600;">Lưu</span>
+      </div>
+      <p style="margin: 10px 0 0; font-size: 12px; color: oklch(0.6 0.015 60);">Gõ số tiền rồi Enter · dấu − là chi, + là thu · nhấn N để quay lại ô số tiền</p>
+    </div>
+
+    <!-- ledger -->
+    <div style="margin-top: 28px; display: flex; align-items: baseline; gap: 14px;">
+      <h1 style="margin: 0; font-size: 20px; line-height: 26px; font-weight: 700; letter-spacing: -0.02em;">Sổ cái</h1>
+      <span class="num" style="font-size: 13px; color: oklch(0.55 0.015 60);">74 giao dịch</span>
+      <div style="margin-left: auto; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 13px; padding: 6px 14px; border-radius: 999px; background: oklch(0.955 0.012 78); color: oklch(0.45 0.015 60);">Tất cả tài khoản</span>
+        <span style="font-size: 13px; padding: 6px 14px; border-radius: 999px; background: oklch(0.955 0.012 78); color: oklch(0.45 0.015 60);">Tất cả danh mục</span>
+        <span style="display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 6px 14px; border-radius: 999px; background: oklch(0.955 0.012 78); color: oklch(0.6 0.015 60);">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+          Tìm trong mô tả</span>
+      </div>
+    </div>
+
+    <div style="margin-top: 14px;">
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 0 16px 6px;">
+        <span class="eyebrow">Thứ bảy, 22 tháng 8</span>
+        <span class="num" style="font-size: 12px; font-weight: 600; color: oklch(0.5 0.13 158);">+105.000 ₫</span>
+      </div>
+      <div class="lrow" style="background: oklch(0.995 0.004 78);"><span style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="width: 8px; height: 8px; border-radius: 999px; background: oklch(0.83 0.05 72);"></span>Cơm trưa</span><span style="font-size: 13px; color: oklch(0.55 0.015 60);">Ăn uống · Tiền mặt</span><span class="num" style="font-size: 16px; font-weight: 600; text-align: right; color: oklch(0.53 0.18 25);">-50.000 ₫</span></div>
+      <div class="lrow"><span style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="width: 8px; height: 8px; border-radius: 999px; background: oklch(0.83 0.05 72);"></span>Grab về nhà</span><span style="font-size: 13px; color: oklch(0.55 0.015 60);">Đi lại · Ví Momo</span><span class="num" style="font-size: 16px; font-weight: 600; text-align: right; color: oklch(0.53 0.18 25);">-45.000 ₫</span></div>
+      <div class="lrow" style="background: oklch(0.995 0.004 78);"><span style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="width: 8px; height: 8px; border-radius: 999px; border: 1px dashed oklch(0.68 0.06 72); box-sizing: border-box;"></span>Bạn trả nợ tiền ăn</span><span style="font-size: 13px; color: oklch(0.55 0.015 60);"><span style="color: oklch(0.48 0.1 68); font-weight: 500;">chưa phân loại</span> · Tiền mặt</span><span class="num" style="font-size: 16px; font-weight: 600; text-align: right; color: oklch(0.5 0.13 158);">200.000 ₫</span></div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 6px;">
+        <span class="eyebrow">Thứ sáu, 21 tháng 8</span>
+        <span class="num" style="font-size: 12px; font-weight: 600; color: oklch(0.53 0.18 25);">-450.000 ₫</span>
+      </div>
+      <div class="lrow" style="background: oklch(0.995 0.004 78);"><span style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="width: 8px; height: 8px; border-radius: 999px; border: 1px dashed oklch(0.68 0.06 72); box-sizing: border-box;"></span>Grab thuê xe cả ngày</span><span style="font-size: 13px; color: oklch(0.55 0.015 60);"><span style="color: oklch(0.48 0.1 68); font-weight: 500;">chưa phân loại</span> · Ví Momo</span><span class="num" style="font-size: 16px; font-weight: 600; text-align: right; color: oklch(0.53 0.18 25);">-450.000 ₫</span></div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 6px;">
+        <span class="eyebrow">Thứ năm, 20 tháng 8</span>
+        <span class="num" style="font-size: 12px; font-weight: 600; color: oklch(0.53 0.18 25);">-30.000 ₫</span>
+      </div>
+      <div class="lrow" style="background: oklch(0.995 0.004 78);"><span style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="width: 8px; height: 8px; border-radius: 999px; background: oklch(0.65 0.09 72);"></span>Cà phê sữa</span><span style="font-size: 13px; color: oklch(0.55 0.015 60);">Cà phê · Ví Momo</span><span class="num" style="font-size: 16px; font-weight: 600; text-align: right; color: oklch(0.53 0.18 25);">-30.000 ₫</span></div>
+
+      <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 14px 16px 6px;">
+        <span class="eyebrow">Thứ tư, 19 tháng 8</span>
+        <span class="num" style="font-size: 12px; font-weight: 600; color: oklch(0.53 0.18 25);">-150.000 ₫</span>
+      </div>
+      <div class="lrow" style="background: oklch(0.995 0.004 78);"><span style="display: flex; align-items: center; gap: 10px; font-size: 15px;"><span style="width: 8px; height: 8px; border-radius: 999px; border: 1px dashed oklch(0.68 0.06 72); box-sizing: border-box;"></span>Sách và văn phòng phẩm</span><span style="font-size: 13px; color: oklch(0.55 0.015 60);"><span style="color: oklch(0.48 0.1 68); font-weight: 500;">chưa phân loại</span> · Vietcombank</span><span class="num" style="font-size: 16px; font-weight: 600; text-align: right; color: oklch(0.53 0.18 25);">-150.000 ₫</span></div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

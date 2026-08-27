@@ -37,8 +37,14 @@ const currencyFormatter = new Intl.NumberFormat(CURRENCY_LOCALE, {
 /**
  * The currency symbol, taken from the formatter rather than typed in, so there
  * is exactly one source for it in the codebase.
+ *
+ * **Exported** since ticket 0005: theme C's quick-entry row sets the symbol
+ * beside the amount box as a static adornment. That is the ONLY reason to reach
+ * for it — a component that needs an amount RENDERED still calls `formatAmount`,
+ * which supplies grouping, sign and symbol together. Typing `₫` into a component
+ * remains a bug (documents/coding-conventions.md → Strings).
  */
-const CURRENCY_SYMBOL: string =
+export const CURRENCY_SYMBOL: string =
   currencyFormatter.formatToParts(0).find((part) => part.type === 'currency')?.value ?? CURRENCY_CODE;
 
 /** The grouping separator the formatter emits (`.` for vi-VN). */

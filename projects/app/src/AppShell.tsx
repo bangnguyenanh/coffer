@@ -1,6 +1,10 @@
+import { LogOut } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useAuth } from './auth/useAuth';
 import { appCopy } from './copy/strings';
+import { useAppData } from './state/useAppData';
 
 /**
  * Application shell: header, nav, and the slot every route renders into.
@@ -17,10 +21,19 @@ import { appCopy } from './copy/strings';
  * `data-user-email` and `data-account-count` are on the DOM as evidence: the
  * second is what makes "the single-account assumption is gone" observable on
  * the page rather than a claim about the source.
+ *
+ * **Theme C (ticket 0005):** ochre wordmark, a pill-nav trough, and the
+ * uncategorised count as a badge. The badge is a STATUS, not a link — the
+ * triage screen it will eventually point at is phase 5 of ticket 0003 and does
+ * not exist, and this ticket adds no routes. `data-uncategorized-count` puts the
+ * number on the DOM so it is checkable rather than merely visible.
  */
 export function AppShell() {
   const { user, accountCount, signOut } = useAuth();
+  const { transactions } = useAppData();
   const email = user?.email ?? '';
+  const initial = email.slice(0, 1).toUpperCase();
+  const uncategorized = transactions.filter((txn) => txn.category_id === null).length;
 
   return (
     <div
@@ -29,35 +42,62 @@ export function AppShell() {
       data-user-email={email}
       data-account-count={accountCount}
     >
-      <header className="border-b border-border-subtle bg-surface-raised">
-        <div className="mx-auto flex max-w-4xl items-baseline gap-4 px-6 py-4">
-          <span className="text-lg font-semibold tracking-tight text-brand">{appCopy.name}</span>
-          <span className="text-sm text-ink-muted">{appCopy.tagline}</span>
-          <nav className="ml-auto flex items-baseline gap-4">
+      <header>
+        <div className="mx-auto flex max-w-content items-center gap-4 px-8 pt-6">
+          <span className="text-[21px] leading-7 font-bold tracking-[-0.02em] text-brand">
+            {appCopy.name}
+          </span>
+
+          <nav className="flex items-center gap-1 rounded-pill bg-inset-strong p-1">
             <NavLink
               to="/"
               className={({ isActive }) =>
-                isActive ? 'text-sm font-medium text-ink' : 'text-sm text-ink-muted'
+                isActive
+                  ? 'rounded-pill bg-surface-raised px-4 py-1.5 text-sm font-semibold text-ink shadow-sm'
+                  : 'rounded-pill px-4 py-1.5 text-sm font-medium text-ink-muted'
               }
             >
               {appCopy.nav.ledger}
             </NavLink>
-            <span className="text-sm font-medium text-ink" data-slot="signed-in-as">
+            <span
+              className="flex items-center gap-2 rounded-pill px-4 py-1.5 text-sm font-medium text-ink-muted"
+              data-uncategorized-count={uncategorized}
+              title={appCopy.uncategorizedCountLabel.replace('{count}', String(uncategorized))}
+            >
+              {appCopy.nav.uncategorized}
+              <Badge className="bg-outflow text-brand-foreground tabular-nums">
+                {uncategorized}
+              </Badge>
+            </span>
+          </nav>
+
+          <div className="ml-auto flex items-center gap-3">
+            <span className="text-[13px] text-ink-muted" data-slot="signed-in-as">
               {email}
             </span>
-            <button
+            <span
+              aria-hidden="true"
+              className="flex size-8 items-center justify-center rounded-pill bg-brand-wash text-[13px] font-semibold text-brand"
+            >
+              {initial}
+            </span>
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               data-action="sign-out"
               aria-label={appCopy.signOutLabel.replace('{email}', email)}
-              className="rounded-md border border-border-subtle px-2 py-1 text-sm text-ink-muted"
+              className="rounded-pill text-ink-muted"
               onClick={signOut}
             >
+              <LogOut aria-hidden="true" />
               {appCopy.signOut}
-            </button>
-          </nav>
+            </Button>
+          </div>
         </div>
       </header>
-      <main className="mx-auto max-w-4xl px-6 py-10">
+
+      <main className="mx-auto max-w-content px-8 pt-6 pb-12">
         <Outlet />
       </main>
     </div>

@@ -1,3 +1,4 @@
+import { Search } from 'lucide-react';
 import type { Account, Category } from '../../data/types';
 import { filterCopy } from '../../copy/strings';
 import { emptyLedgerFilters, isFiltered, type LedgerFilters as Filters } from './useLedger';
@@ -9,14 +10,27 @@ interface LedgerFiltersProps {
   readonly categories: readonly Category[];
 }
 
+/** A control that reads as a chip: inset ground, pill radius, one tab stop. */
 const FIELD_CLASS =
-  'w-full rounded-md border border-border-subtle bg-surface-raised px-2 py-1.5 text-sm text-ink';
-const LABEL_CLASS = 'block text-xs font-medium text-ink-muted';
+  'w-full appearance-none rounded-pill bg-inset px-3.5 py-1.5 text-[13px] text-ink outline-none focus-visible:ring-3 focus-visible:ring-ring/50';
+const LABEL_CLASS = 'eyebrow block pb-1 pl-1';
 
 /**
  * The filter controls. They hold no results and do no matching — each control
- * only edits the filter value, and the value becomes a query parameter on the
- * next request (see `useLedger`).
+ * only edits the filter value, and the value becomes a query parameter that
+ * `useLedger` matches against (see `useLedger`).
+ *
+ * **Ticket 0005 restyled this file and NOTHING else.** Every control keeps its
+ * id, name, value and `onChange`, and `set()` below is untouched: the filter box
+ * has an open keystroke-loss race ([bug 0001](../../../../management/bugs/0001-ledger-filter-drops-keystrokes.md))
+ * whose fix is a separate ticket, and the way this component derives its next
+ * state is exactly the thing that fix will change. Restyling around it must not
+ * move it.
+ *
+ * Theme C draws filters as chips on one line rather than as a boxed fieldset.
+ * The eyebrow labels stay VISIBLE — the artboard shows display-only pills, but
+ * two of these five are date pickers, and "Từ ngày" / "Đến ngày" cannot be told
+ * apart from their controls alone.
  */
 export function LedgerFilters({ value, onChange, accounts, categories }: LedgerFiltersProps) {
   const set = <K extends keyof Filters>(key: K, next: Filters[K]): void => {
@@ -24,10 +38,8 @@ export function LedgerFilters({ value, onChange, accounts, categories }: LedgerF
   };
 
   return (
-    <fieldset className="mt-6 rounded-lg border border-border-subtle bg-surface-raised p-4">
-      <legend className="px-1 text-xs font-medium uppercase tracking-wide text-ink-muted">
-        {filterCopy.legend}
-      </legend>
+    <fieldset className="panel mt-3.5 px-5 py-3.5">
+      <legend className="sr-only">{filterCopy.legend}</legend>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         <div>
@@ -36,7 +48,7 @@ export function LedgerFilters({ value, onChange, accounts, categories }: LedgerF
             id="filter-from"
             name="from"
             type="date"
-            className={FIELD_CLASS}
+            className={`${FIELD_CLASS} tabular-nums`}
             value={value.from}
             onChange={(event) => set('from', event.target.value)}
           />
@@ -48,7 +60,7 @@ export function LedgerFilters({ value, onChange, accounts, categories }: LedgerF
             id="filter-to"
             name="to"
             type="date"
-            className={FIELD_CLASS}
+            className={`${FIELD_CLASS} tabular-nums`}
             value={value.to}
             onChange={(event) => set('to', event.target.value)}
           />
@@ -90,23 +102,29 @@ export function LedgerFilters({ value, onChange, accounts, categories }: LedgerF
 
         <div>
           <label className={LABEL_CLASS} htmlFor="filter-q">{filterCopy.search}</label>
-          <input
-            id="filter-q"
-            name="q"
-            type="search"
-            autoComplete="off"
-            placeholder={filterCopy.searchPlaceholder}
-            className={FIELD_CLASS}
-            value={value.q}
-            onChange={(event) => set('q', event.target.value)}
-          />
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-3.5 -translate-y-1/2 text-ink-faint"
+            />
+            <input
+              id="filter-q"
+              name="q"
+              type="search"
+              autoComplete="off"
+              placeholder={filterCopy.searchPlaceholder}
+              className={`${FIELD_CLASS} pl-8`}
+              value={value.q}
+              onChange={(event) => set('q', event.target.value)}
+            />
+          </div>
         </div>
       </div>
 
       {isFiltered(value) && (
         <button
           type="button"
-          className="mt-3 text-xs font-medium text-brand underline underline-offset-2"
+          className="mt-3 text-xs font-medium text-brand underline underline-offset-2 hover:text-brand-hover"
           onClick={() => onChange(emptyLedgerFilters)}
         >
           {filterCopy.reset}

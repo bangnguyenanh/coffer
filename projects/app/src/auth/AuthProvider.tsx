@@ -33,9 +33,25 @@
  * on `api` and buys this surface nothing at runtime — the no-network,
  * no-persistence, no-hashing boundary above is untouched by it.
  *
- * Seeded EMPTY, and a reload re-seeds: every account created in a session is
- * gone on refresh. That is deliberate; there is no persistence anywhere in this
- * prototype, and the first screen a fresh load can act on is sign up.
+ * **Seeded with ONE account, and a reload re-seeds to exactly that one**
+ * (Owner directive 2026-08-27, hub ticket 0003 phase 2c). The account is the
+ * prototype fixture in `prototype-account.ts` — read its banner before touching
+ * it; it is deleted in episode 2, not migrated. Accounts created during a
+ * session are still gone on refresh: there is no persistence anywhere in this
+ * prototype, and seeding is not a step towards it.
+ *
+ * **This replaces "seeded EMPTY", which used to be stated here as law.** That
+ * paragraph existed because sign up was the screen being built and a fresh load
+ * had to land on something it could act on. Phase 2b ended that: `/login` and
+ * `/signup` are both permanently reachable and neither redirects to the other,
+ * so an empty account list stopped buying reachability and only cost the Owner
+ * a sign up on every reload.
+ *
+ * **A seeded account is NOT a session.** `currentUserId` still starts `null`,
+ * so a fresh load is `anonymous` and lands on the login screen exactly as
+ * before — with its fields prefilled. That screen is the opening shot of
+ * episode 2 (*log in → add an expense → reload*); auto-signing-in would delete
+ * the shot. Prefilled fields, never a bypass.
  *
  * The validation rules below (email shape, minimum length) are what they always
  * really were on this surface: the UI states the two forms have to render. They
@@ -51,6 +67,7 @@ import {
   type AuthState,
   type AuthStatus,
 } from './AuthContext';
+import { PROTOTYPE_ACCOUNT } from './prototype-account';
 
 const EMAIL_SHAPE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const MIN_PASSWORD_LENGTH = 8;
@@ -61,19 +78,42 @@ const fail = (code: AuthFailure): AuthResult => ({ ok: false, code });
 /** Email is the identity, and identity is case-insensitive. Passwords never are. */
 const emailKey = (email: string): string => email.trim().toLowerCase();
 
+/**
+ * The seed, built here rather than inlined so the account and its password go
+ * into the two structures TOGETHER — an account seeded without its password is
+ * an account nobody can sign in as, and the failure would look like a wrong
+ * password rather than a missing seed.
+ *
+ * `useState(seedAccounts)` passes the function, not its result: React calls it
+ * once. `useRef` keeps the first Map it is given and drops later ones, so the
+ * map sign up writes to is the seeded one for the life of the session.
+ */
+const seedAccounts = (): readonly User[] => [
+  { id: PROTOTYPE_ACCOUNT.id, email: PROTOTYPE_ACCOUNT.email },
+];
+
+const seedPasswords = (): Map<string, string> =>
+  new Map([[emailKey(PROTOTYPE_ACCOUNT.email), PROTOTYPE_ACCOUNT.password]]);
+
 export function AuthProvider({ children }: { readonly children: ReactNode }) {
-  const [accounts, setAccounts] = useState<readonly User[]>([]);
+  const [accounts, setAccounts] = useState<readonly User[]>(seedAccounts);
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
 
   /**
    * The credentials, for the length of this session. A ref and not state on
    * purpose: passwords must never be reachable from anything that renders.
    * Keyed by `emailKey`, so lookup matches the way login compares addresses.
+   *
+   * Starts holding the prototype fixture's password — through the same map and
+   * the same `===` comparison as any account signed up in the session.
    */
-  const passwords = useRef(new Map<string, string>());
+  const passwords = useRef(seedPasswords());
 
-  /** A counter, not `accounts.length`: two sign ups in one tick must not collide. */
-  const nextUserId = useRef(0);
+  /**
+   * A counter, not `accounts.length`: two sign ups in one tick must not collide.
+   * Starts at 1 because the seeded fixture already took `user_1`.
+   */
+  const nextUserId = useRef(1);
 
   const status: AuthStatus = currentUserId === null ? 'anonymous' : 'authenticated';
   const user = accounts.find((candidate) => candidate.id === currentUserId) ?? null;

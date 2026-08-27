@@ -19,7 +19,7 @@ export function AuthError({ code }: { readonly code: string | null }) {
     <p
       role="alert"
       data-auth-error={code}
-      className="rounded-md border border-outflow/30 bg-outflow/5 px-3 py-2 text-sm text-outflow"
+      className="rounded-row border border-outflow/30 bg-outflow/5 px-3 py-2 text-sm text-outflow"
     >
       {authErrorCopy[code] ?? authErrorFallback}
     </p>

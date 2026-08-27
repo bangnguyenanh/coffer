@@ -3,3 +3,8 @@ dist
 *.tsbuildinfo
 *.local
 .DS_Store
+
+# Playwright — the evidence loop's own output (screenshots go to a scratch dir)
+test-results
+playwright-report
+e2e-shots

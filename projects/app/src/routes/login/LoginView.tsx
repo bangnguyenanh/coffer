@@ -12,24 +12,39 @@
  * as `invalid_credentials` and is RENDERED on the form. A login screen that
  * silently does nothing on a bad password is the failure this is written
  * against.
+ *
+ * **Both fields open prefilled with the prototype fixture** (Owner directive
+ * 2026-08-27, hub ticket 0003 phase 2c) — the account `AuthProvider` seeds, so
+ * the two cannot drift: they read the same constant. The caret starts in the
+ * email field, so the ledger is one Enter away with nothing typed.
+ *
+ * This is a PREFILL, not a bypass. The screen still renders, still submits, and
+ * still rejects — clear a field, or edit the password, and you get the ordinary
+ * failure path above. It also dies with the fixture in episode 2, and the two
+ * `useState` initialisers are the whole of what has to be undone.
  */
 
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { AuthError } from '../../auth/AuthError';
 import {
   AUTH_CROSSLINK_CLASS,
   AUTH_FIELD_CLASS,
   AUTH_LABEL_CLASS,
+  AUTH_SUBMIT_CLASS,
   AuthScreen,
 } from '../../auth/AuthScreen';
+import { PROTOTYPE_ACCOUNT } from '../../auth/prototype-account';
 import { useAuth } from '../../auth/useAuth';
 import { authLinkCopy, loginCopy } from '../../copy/strings';
 
 export function LoginView() {
   const { signIn } = useAuth();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(PROTOTYPE_ACCOUNT.email);
+  const [password, setPassword] = useState(PROTOTYPE_ACCOUNT.password);
   const [errorCode, setErrorCode] = useState<string | null>(null);
 
   const onSubmit = (event: FormEvent<HTMLFormElement>): void => {
@@ -56,8 +71,8 @@ export function LoginView() {
       <AuthError code={errorCode} />
 
       <div>
-        <label className={AUTH_LABEL_CLASS} htmlFor="login-email">{loginCopy.email}</label>
-        <input
+        <Label className={AUTH_LABEL_CLASS} htmlFor="login-email">{loginCopy.email}</Label>
+        <Input
           id="login-email"
           name="email"
           type="email"
@@ -71,8 +86,8 @@ export function LoginView() {
       </div>
 
       <div>
-        <label className={AUTH_LABEL_CLASS} htmlFor="login-password">{loginCopy.password}</label>
-        <input
+        <Label className={AUTH_LABEL_CLASS} htmlFor="login-password">{loginCopy.password}</Label>
+        <Input
           id="login-password"
           name="password"
           type="password"
@@ -83,12 +98,9 @@ export function LoginView() {
         />
       </div>
 
-      <button
-        type="submit"
-        className="w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-surface-raised"
-      >
+      <Button type="submit" className={AUTH_SUBMIT_CLASS}>
         {loginCopy.submit}
-      </button>
+      </Button>
     </AuthScreen>
   );
 }

@@ -14,11 +14,15 @@
 
 import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { AuthError } from '../../auth/AuthError';
 import {
   AUTH_CROSSLINK_CLASS,
   AUTH_FIELD_CLASS,
   AUTH_LABEL_CLASS,
+  AUTH_SUBMIT_CLASS,
   AuthScreen,
 } from '../../auth/AuthScreen';
 import { useAuth } from '../../auth/useAuth';
@@ -65,8 +69,8 @@ export function SignupView() {
       <AuthError code={errorCode} />
 
       <div>
-        <label className={AUTH_LABEL_CLASS} htmlFor="signup-email">{signupCopy.email}</label>
-        <input
+        <Label className={AUTH_LABEL_CLASS} htmlFor="signup-email">{signupCopy.email}</Label>
+        <Input
           id="signup-email"
           name="email"
           type="email"
@@ -80,8 +84,8 @@ export function SignupView() {
       </div>
 
       <div>
-        <label className={AUTH_LABEL_CLASS} htmlFor="signup-password">{signupCopy.password}</label>
-        <input
+        <Label className={AUTH_LABEL_CLASS} htmlFor="signup-password">{signupCopy.password}</Label>
+        <Input
           id="signup-password"
           name="password"
           type="password"
@@ -94,8 +98,8 @@ export function SignupView() {
       </div>
 
       <div>
-        <label className={AUTH_LABEL_CLASS} htmlFor="signup-confirm">{signupCopy.confirm}</label>
-        <input
+        <Label className={AUTH_LABEL_CLASS} htmlFor="signup-confirm">{signupCopy.confirm}</Label>
+        <Input
           id="signup-confirm"
           name="confirm"
           type="password"
@@ -106,12 +110,9 @@ export function SignupView() {
         />
       </div>
 
-      <button
-        type="submit"
-        className="w-full rounded-md bg-brand px-3 py-2 text-sm font-medium text-surface-raised"
-      >
+      <Button type="submit" className={AUTH_SUBMIT_CLASS}>
         {signupCopy.submit}
-      </button>
+      </Button>
     </AuthScreen>
   );
 }

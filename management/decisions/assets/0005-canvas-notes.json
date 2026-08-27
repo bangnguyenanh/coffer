@@ -1,0 +1,104 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "page": "page-1",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 1060,
+      "title": "C · Ấm"
+    },
+    {
+      "file": "Current.dc.html",
+      "page": "page-2",
+      "x": 0,
+      "y": 0,
+      "w": 1280,
+      "h": 1060,
+      "title": "Hiện tại — mốc so sánh"
+    },
+    {
+      "file": "DirectionA.dc.html",
+      "page": "page-2",
+      "x": 1400,
+      "y": 0,
+      "w": 1280,
+      "h": 1060,
+      "title": "A · Sổ tay"
+    },
+    {
+      "file": "DirectionB.dc.html",
+      "page": "page-2",
+      "x": 2800,
+      "y": 0,
+      "w": 1280,
+      "h": 1060,
+      "title": "B · Bàn phím"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "note-chosen",
+      "page": "page-1",
+      "x": 1400,
+      "y": 0,
+      "w": 620,
+      "text": "C · ẤM — hướng đã chọn (26/08/2026)\n\nBe Vietnam Pro, nền kem, một accent hoàng thổ. Trục của hướng này là BỐI CẢNH: con số không đứng một mình mà nằm cạnh câu hỏi nó trả lời.\n\nDải tháng dùng số thật từ fixtures — chi 15.423.000 ₫, thu 26.400.000 ₫, và thanh phân bổ một tông cho thấy 8.113.000 ₫, hơn nửa tháng 8, chưa phân loại. Đó là thứ biến hộp Phân loại từ một cái badge thành một lý do.\n\nĐánh đổi đã biết và chấp nhận: ít dòng nhất mỗi màn. Nếu nhập nhanh chậm đi vì layout này thì đó là hồi quy, không phải khẩu vị."
+    },
+    {
+      "id": "note-open",
+      "page": "page-1",
+      "x": 1400,
+      "y": 380,
+      "w": 620,
+      "text": "HAI ĐIỂM CÒN MỞ trong chính khung này\n\n1. Dấu + trên số cộng — “+10.977.000 ₫” và “+105.000 ₫”. formatAmount KHÔNG bao giờ phát ra dấu +; Intl không làm thế. Giữ nó nghĩa là mở rộng hợp đồng tiền cho aggregate.\n\n2. Dải tháng là nội dung của ticket 0004. Ở đây mới là đề xuất, chưa được ticket hoá.\n\nMọi số giao dịch thì đúng nguyên xi: U+00A0 trước ₫, chấm ngăn nghìn, không thập phân, 0 ₫ trung tính."
+    },
+    {
+      "id": "note-current",
+      "page": "page-2",
+      "x": 0,
+      "y": -320,
+      "w": 620,
+      "text": "HIỆN TẠI — mốc so sánh\n\nshadcn mặc định: nền trắng ngà, một xanh brand, cột 896px giữa màn, ba thẻ viền xám xếp dọc. Không sai — chỉ là chưa có lập trường nào.\n\nBa thứ hỏng thật, không phải chuyện gu: cột hẹp giữa màn 1280 nên hai bên trống hoác; lưới nhập nhanh wrap lệch (đúng khoản nợ polish của ticket 0006); bảng phẳng không cộng gì theo ngày."
+    },
+    {
+      "id": "note-a",
+      "page": "page-2",
+      "x": 1400,
+      "y": -320,
+      "w": 620,
+      "text": "A · SỔ TAY — không chọn\n\nTrục: mật độ và chữ nghĩa. Bỏ hết thẻ, viền bo và đổ bóng; chỉ còn kẻ ngang trên nền giấy ấm. Màu duy nhất trên trang là hướng tiền.\n\nĐáng giữ lại từ hướng này: cộng theo từng ngày. C đã mang nó sang.\n\nLý do không chọn: khô, ô nhập không còn trông như ô nhập, và sản phẩm mất hẳn màu nhận diện."
+    },
+    {
+      "id": "note-b",
+      "page": "page-2",
+      "x": 2800,
+      "y": -320,
+      "w": 620,
+      "text": "B · BÀN PHÍM — không chọn\n\nTrục: tốc độ. Nền tối, rail trái, dòng nhập kiểu command line, mọi thứ bấm được đều đeo phím tắt.\n\nĐáng giữ lại từ hướng này: mọi affordance đeo phím tắt của nó, và status bar. Cân nhắc ghép vào C sau.\n\nLý do không chọn: dark mode là quyết định của Owner mà index.css nói thẳng là chưa ai được tự bật — chọn B là quyết định luôn cả chuyện đó, gộp hai việc vào một."
+    },
+    {
+      "id": "note-contract",
+      "page": "page-2",
+      "x": 0,
+      "y": 1120,
+      "w": 1280,
+      "text": "Cả bốn khung giữ nguyên hợp đồng tiền: -50.000 ₫ — dấu chấm ngăn nghìn, U+00A0 trước ₫, không bao giờ có phần thập phân; 0 ₫ trung tính; ngày 22/08/2026. Mọi con số lấy từ src/data/*.json, không bịa dòng nào. Bản hiện tại được dựng lại từ giá trị thật trong index.css và các component, không phải vẽ lại theo trí nhớ."
+    }
+  ],
+  "launch": {
+    "view": "canvas",
+    "page": "page-1"
+  },
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Đã chọn"
+    },
+    {
+      "id": "page-2",
+      "name": "Đã cân nhắc"
+    }
+  ]
+}

@@ -12,7 +12,15 @@ export const appCopy = {
   tagline: 'Sổ chi tiêu cá nhân',
   nav: {
     ledger: 'Sổ cái',
+    /**
+     * The count chip in the pill nav (ticket 0005, theme C). It is a STATUS,
+     * not a destination: the triage screen it will eventually link to is phase
+     * 5 of ticket 0003 and does not exist yet, so nothing here is a link.
+     */
+    uncategorized: 'Chưa phân loại',
   },
+  /** `{count}` is substituted. The accessible name of the count chip above. */
+  uncategorizedCountLabel: '{count} giao dịch chưa phân loại',
   /**
    * The way out. Wording stays the conventional 'Đăng xuất' — but now that more
    * than one account can exist in a session, WHICH account you are signed in as
@@ -49,6 +57,12 @@ export const ledgerCopy = {
 
   /** `{count}` is replaced with the number of matching transactions. */
   resultCount: '{count} giao dịch',
+
+  /**
+   * The day group's subtotal (ticket 0005, theme C). `{amount}` arrives already
+   * formatted by the money module — never assembled here.
+   */
+  dayTotalLabel: 'Tổng trong ngày: {amount}',
 } as const;
 
 export const filterCopy = {
@@ -108,11 +122,17 @@ export const quickEntryCopy = {
 
   category: 'Danh mục',
   /**
-   * The skip option is the DEFAULT and says what skipping means. Wording matches
-   * the ledger chip (`Chưa phân loại`) so the choice made here is recognisable
-   * as the chip that appears on the row.
+   * The skip option is the DEFAULT, and its wording is EXACTLY the ledger chip
+   * (`Chưa phân loại`) so the choice made here is recognisable as the chip that
+   * appears on the row.
+   *
+   * It lost its `(bỏ qua)` suffix in ticket 0005: theme C shows the closed
+   * control as a chip on a single-line row, where this string is the widest
+   * fixed element and four characters of parenthesis pushed the row to wrap.
+   * The meaning did not go anywhere — `categoryHint` below is the control's
+   * `title`, so "skipping is allowed" is still stated, just not in the chip.
    */
-  skipCategory: 'Chưa phân loại (bỏ qua)',
+  skipCategory: 'Chưa phân loại',
   categoryHint: 'Bỏ qua được — phân loại sau.',
 
   account: 'Tài khoản',

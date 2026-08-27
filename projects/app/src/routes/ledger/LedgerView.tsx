@@ -4,7 +4,7 @@ import { ledgerCopy } from '../../copy/strings';
 import type { Transaction } from '../../data/types';
 import { LedgerFilters } from './LedgerFilters';
 import { QuickEntry } from './QuickEntry';
-import { TransactionTable } from './TransactionTable';
+import { TransactionList } from './TransactionList';
 import {
   emptyLedgerFilters,
   filtersFromSearchParams,
@@ -25,6 +25,9 @@ import {
  * `data-filter-query` and `data-result-count` are on the DOM on purpose: what
  * this view is FOR is showing the right subset, so the applied filter and the
  * count it produced are rendered as evidence rather than left to be inferred.
+ * Since ticket 0005 the count sits in the ledger's heading line and is therefore
+ * rendered in EVERY state, including the two empty ones — a count that vanishes
+ * exactly when it reads zero is the least useful moment to lose it.
  *
  * **Phase 4 puts quick entry at the TOP of this view, above the filters.** Entry
  * is what the Owner does dozens of times a day and filtering is what they do
@@ -37,6 +40,11 @@ import {
  * so and offers to clear the filters. The alternative — silently widening the
  * filter on save — throws away the subset the Owner deliberately asked for, and
  * doing nothing at all makes a saved row look lost. See `onClearFilters` below.
+ *
+ * **Theme C (ticket 0005) does NOT add the month band.** The summary strip in
+ * the artboard — spent / earned / difference / allocation bar — is feature work
+ * belonging to ticket 0004, and this ticket builds the tokens it will use, not
+ * the band itself.
  */
 export function LedgerView() {
   // Filter state is the URL, not component state: one source of truth, and a
@@ -72,18 +80,23 @@ export function LedgerView() {
       data-filter-query={filterQuery}
       data-status="ready"
     >
-      <h1 id="ledger-title" className="text-2xl font-semibold tracking-tight">
-        {ledgerCopy.title}
-      </h1>
-      <p className="mt-1 text-sm text-ink-muted">{ledgerCopy.subtitle}</p>
+      <QuickEntry
+        accounts={accounts}
+        categories={categories}
+        matchesCurrentFilter={matchesCurrentFilter}
+        onClearFilters={clearFilters}
+      />
 
-      <div className="mt-6">
-        <QuickEntry
-          accounts={accounts}
-          categories={categories}
-          matchesCurrentFilter={matchesCurrentFilter}
-          onClearFilters={clearFilters}
-        />
+      <div className="mt-7 flex items-baseline gap-3.5">
+        <h1
+          id="ledger-title"
+          className="text-xl leading-[26px] font-bold tracking-[-0.02em] text-ink"
+        >
+          {ledgerCopy.title}
+        </h1>
+        <p className="text-[13px] tabular-nums text-ink-muted" data-result-count={total}>
+          {ledgerCopy.resultCount.replace('{count}', String(total))}
+        </p>
       </div>
 
       <LedgerFilters
@@ -101,18 +114,13 @@ export function LedgerView() {
           body={filtered ? ledgerCopy.noMatchBody : ledgerCopy.emptyBody}
         />
       ) : (
-        <>
-          <p className="mt-6 text-xs text-ink-muted" data-result-count={total}>
-            {ledgerCopy.resultCount.replace('{count}', String(total))}
-          </p>
-          <div className="mt-2 overflow-x-auto rounded-lg border border-border-subtle bg-surface-raised px-4">
-            <TransactionTable
-              transactions={transactions}
-              accounts={accounts}
-              categories={categories}
-            />
-          </div>
-        </>
+        <div className="mt-3.5">
+          <TransactionList
+            transactions={transactions}
+            accounts={accounts}
+            categories={categories}
+          />
+        </div>
       )}
     </section>
   );
@@ -122,9 +130,9 @@ function Placeholder({ title, body }: { readonly title: string; readonly body?: 
   return (
     <div
       data-ledger-placeholder=""
-      className="mt-6 rounded-lg border border-dashed border-border-subtle bg-surface-raised px-6 py-16 text-center"
+      className="mt-3.5 rounded-panel border border-dashed border-border-subtle bg-surface-raised px-6 py-16 text-center"
     >
-      <p className="font-medium">{title}</p>
+      <p className="font-medium text-ink">{title}</p>
       {body !== undefined && body !== '' && <p className="mt-2 text-sm text-ink-muted">{body}</p>}
     </div>
   );
