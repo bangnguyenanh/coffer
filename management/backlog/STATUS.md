@@ -20,7 +20,7 @@
 
 | ID | Title | Waiting on | Detail |
 |----|-------|-----------|--------|
-| [0005](0005-app-design-system-shadcn-theme-c.md) | Design system — shadcn/ui on theme C | Owner: **commit**, plus two calls | 19 files uncommitted (first commit since `b0762bd`). Two decisions in the ticket: keep or revert the `CURRENCY_SYMBOL` export from `money.ts` (4 lines to revert), and keep or delete `playwright.config.ts` + `e2e/` in the surface |
+| — | — | — | — |
 
 ## Epics
 
@@ -36,7 +36,7 @@ Goal: enter a transaction, see it in a ledger, and have the number be right. Eve
 | 1 | [0002](0002-app-shell-and-money-formatting.md) — app shell + money formatting module | app | **Closed 2026-08-23** — committed in `ff4e027` |
 | 1.5 | [0003](0003-app-ui-prototype-mock-data.md) — prototype core loop: auth, ledger, entry, triage | app | **In progress** — setup/login/ledger screens built; mock network layer being removed per Owner, 2026-08-25; 4, 5, 6 open |
 | 1.6 | [0004](0004-app-prototype-accounts-transfers-insight.md) — accounts, transfers, categories, month insight, dashboard | app | Open — blocked on 0003; **transfer model informs an ADR owed before phase 2's migration** |
-| 1.7 | [0005](0005-app-design-system-shadcn-theme-c.md) — shadcn/ui + theme C token layer + re-skin | app | **DONE 2026-08-27 — Awaiting Owner.** [ADR 0005](../decisions/0005-design-system-shadcn-theme-c.md). Runs ahead of `api` by the Owner's explicit override; 0004's month band lands in theme C when 0004 runs |
+| 1.7 | [0005](0005-app-design-system-shadcn-theme-c.md) — shadcn/ui + theme C token layer + re-skin | app | **Closed 2026-08-27** — committed in `0625c31`. [ADR 0005](../decisions/0005-design-system-shadcn-theme-c.md). Runs ahead of `api` by the Owner's explicit override; 0004's month band lands in theme C when 0004 runs |
 | 2 | *(not yet ticketed)* transactions + accounts CRUD endpoints | api | Blocked on 0001; **response shape is a contract — pin it in the ticket before phase 3 starts.** 0003 + 0004's mock handlers produce the *draft*; promoting it needs the Owner's go. **There is no longer a draft to promote.** The Owner ended the mock-network layer on 2026-08-25 (see [0003](0003-app-ui-prototype-mock-data.md)), so 0003 and 0004 no longer produce candidate request/response shapes — this ticket must **define** them, with the Owner's go, rather than extract them. What survives as input is the client's type definitions and the money contract, not routes or status codes |
 | 3 | *(not yet ticketed)* transaction entry + ledger view against the API | app | Blocked on phase 2's contract |
 
@@ -46,4 +46,5 @@ Open product questions that gate work beyond this Epic — import mechanism, bud
 
 | ID | Title | Closed | Detail |
 |----|-------|--------|--------|
+| [0005](0005-app-design-system-shadcn-theme-c.md) | Design system — shadcn/ui on theme C ("Ấm") | 2026-08-27 | All four phases; Playwright 4/4, build green, 11 keystrokes held, 105 amounts checked for a stray `+`. Owner's commit gate cleared same day — committed as `0625c31`. **Two reversible calls stand as committed** unless the Owner says otherwise: `money.ts` exports `CURRENCY_SYMBOL` for one `aria-hidden` ₫ (4 lines to revert, one consumer), and `playwright.config.ts` + `e2e/` live in the surface. The harness hole this ticket exposed is fixed in `88e55a7`. |
 | [0002](0002-app-shell-and-money-formatting.md) | Web client foundation — app shell and the money formatting module | 2026-08-23 | Done 2026-08-22 (build green, behavior observed and PM-reverified). Owner's commit gate cleared 2026-08-23 — committed as `ff4e027` and pushed to [bangnguyenanh/coffer](https://github.com/bangnguyenanh/coffer). |

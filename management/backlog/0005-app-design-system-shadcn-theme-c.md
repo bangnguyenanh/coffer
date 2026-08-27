@@ -1,6 +1,6 @@
 # Backlog 0005: Design system — shadcn/ui on theme C ("Ấm")
 
-**Status:** Done 2026-08-27 — Awaiting Owner (commit gate)  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-26
+**Status:** Closed 2026-08-27 — committed in `0625c31`  ·  **Priority:** High  ·  **Surfaces:** app  ·  **Opened:** 2026-08-26
 **Epic:** Foundation — first usable expense tracker (phase 1.7)
 **Decision:** [ADR 0005](../decisions/0005-design-system-shadcn-theme-c.md)
 
