@@ -106,6 +106,13 @@
      utility below and documents/design-system.md. */
   --font-sans: 'Be Vietnam Pro', ui-sans-serif, system-ui, sans-serif;
   --font-heading: var(--font-sans);
+  /* Till paper. The ONE place this surface is not Be Vietnam Pro: the decorative
+     receipt on the login screen (backlog 0006), where a monospaced face is what
+     makes the slab read as a printed receipt rather than as another card. Every
+     face in the stack is a system face, so nothing is fetched and nothing can
+     fail to load. Named as a token rather than reached for as `font-mono` so the
+     one legitimate use is visible in the palette. */
+  --font-receipt: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
 
   /* Content column — the artboard's 1040px measure. */
   --container-content: 1040px;
@@ -201,6 +208,37 @@
     var(--uncat-hatch-a) 0 5px,
     var(--uncat-hatch-b) 5px 10px
   );
+}
+
+/* The torn bottom edge of the login screen's receipt panel (backlog 0006).
+   A row of triangular teeth, cut with a mask so the paper's own ground shows
+   through them rather than being faked with a second coloured element.
+
+   It lives HERE and not in the component for the same reason `uncat-hatch` does:
+   a mask is a stack of colour values, and a colour literal outside this file is
+   a bug (documents/design-system.md §3.5). The values below are mask ALPHA —
+   `#000` keeps, `#0000` cuts — never theme ink.
+
+   Layer 1 keeps the body of the panel, stopping one tooth short of the bottom.
+   Layer 2 stamps the teeth across that last strip: a conic wedge whose apex sits
+   at the top of each tile, pointing down. */
+@utility receipt-torn {
+  --receipt-tooth-w: 16px;
+  --receipt-tooth-h: 10px;
+
+  -webkit-mask-image: linear-gradient(#000 0 0),
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg);
+  -webkit-mask-size: 100% calc(100% - var(--receipt-tooth-h)),
+    var(--receipt-tooth-w) var(--receipt-tooth-h);
+  -webkit-mask-position: top left, bottom left;
+  -webkit-mask-repeat: no-repeat, repeat-x;
+
+  mask-image: linear-gradient(#000 0 0),
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg);
+  mask-size: 100% calc(100% - var(--receipt-tooth-h)),
+    var(--receipt-tooth-w) var(--receipt-tooth-h);
+  mask-position: top left, bottom left;
+  mask-repeat: no-repeat, repeat-x;
 }
 
 @layer base {

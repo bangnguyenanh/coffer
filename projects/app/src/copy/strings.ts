@@ -303,6 +303,31 @@ export const loginCopy = {
 } as const;
 
 /**
+ * The paper receipt beside the login form (backlog 0006).
+ *
+ * It is STAGING, not data. The panel exists so the opening frame of a recording
+ * shows what the product is for; it is `aria-hidden`, it takes no pointer
+ * events, and it is wired to nothing — not `src/state/`, not `src/data/*.json`.
+ * The amounts it shows live as a `const` in `auth/ReceiptPanel.tsx` and are
+ * rendered through `lib/money.ts` like every other amount on this surface.
+ *
+ * No date line on purpose: a hardcoded calendar date reads as stale the day
+ * after it is written, and the panel is decoration that has to survive a
+ * recording made at any time.
+ */
+export const authReceiptCopy = {
+  title: 'Sổ tay chi tiêu',
+  subtitle: 'Vài dòng gần đây',
+  lines: {
+    coffee: 'Cà phê',
+    market: 'Đi chợ',
+    rent: 'Tiền nhà',
+    salary: 'Lương',
+  },
+  total: 'Tổng cộng',
+} as const;
+
+/**
  * The cross-links that make the two screens a pair.
  *
  * Each screen names the other one and links to it, both ways. This is the part
