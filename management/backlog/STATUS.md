@@ -18,7 +18,7 @@
 
 | ID | Title | Waiting on | Detail |
 |----|-------|-----------|--------|
-| — | — | — | — |
+| [0006](0006-app-login-screen-staging.md) | Login screen — gạch bông ground, receipt panel, wordmark | Owner — commit gate **+ one doc call** | Done 2026-08-28. Build green, Playwright 45/45 (41 baseline + 4 new), four screenshots. `LoginView`/`SignupView` and all of `src/auth/`'s logic byte-identical, so ep2's rewrite is untouched. **The doc call:** `app/documents/coding-conventions.md` §Tests scopes the no-unit-test exception to 0002/0003/0004 and says it expires with them — 0006 invoked it anyway. Name 0006, or restate it as a standing prototype-track rule |
 
 ## Epics
 
