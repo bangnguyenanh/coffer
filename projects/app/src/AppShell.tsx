@@ -2,6 +2,7 @@ import { LogOut } from 'lucide-react';
 import { NavLink, Outlet } from 'react-router-dom';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { GachBongGround } from './components/GachBongGround';
 import { useAuth } from './auth/useAuth';
 import { appCopy } from './copy/strings';
 import { needsCategory } from './lib/transfers';
@@ -37,6 +38,22 @@ import { useAppData } from './state/useAppData';
  * … does not exist"* — and `/triage` now does. The count is live: it is read
  * off the shared transaction list, so clearing rows in the inbox decrements the
  * number in the header without either screen telling the other anything.
+ *
+ * **Backlog 0007: the gạch bông ground is here too**, so signing in no longer
+ * crosses a visual seam. Two things that are load-bearing and easy to undo by
+ * accident:
+ *
+ *   - the root carries `relative isolate`. It had NEITHER before, and the
+ *     ground's `-z-10` needs a stacking context or it lands under the root's own
+ *     `bg-surface` and is invisible. `isolate` also keeps the negative index
+ *     from escaping into whatever renders around the shell.
+ *   - it is mounted at `density="dense"`, a lighter tone than the auth screens
+ *     use. The signed-in screens carry rows, panels, the month band, the
+ *     category ramp and the `uncat-hatch`; the value was tuned on `/ledger`
+ *     against the seeded data, which is the busiest screen the app has.
+ *
+ * The ground is `aria-hidden`, `pointer-events-none` and not focusable, so it
+ * changes nothing about the header's tab order or the measured entry paths.
  */
 export function AppShell() {
   const { user, accountCount, signOut } = useAuth();
@@ -51,11 +68,13 @@ export function AppShell() {
 
   return (
     <div
-      className="min-h-screen bg-surface text-ink"
+      className="relative isolate min-h-screen bg-surface text-ink"
       data-auth="authenticated"
       data-user-email={email}
       data-account-count={accountCount}
     >
+      <GachBongGround density="dense" />
+
       <header>
         <div className="mx-auto flex max-w-content items-center gap-4 px-8 pt-6">
           <span className="text-[21px] leading-7 font-bold tracking-[-0.02em] text-brand">

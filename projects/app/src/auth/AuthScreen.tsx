@@ -21,7 +21,10 @@
  * the word AROUND is the whole boundary of that ticket: the form, its fields,
  * its error, its cross-link and its prefill are byte-for-byte what they were.
  *
- *   - `GachBongGround` — the encaustic-tile texture, on BOTH screens.
+ *   - `GachBongGround` — the encaustic-tile texture, on BOTH screens. It moved
+ *     to `src/components/` in backlog 0007 when `AppShell` became its second
+ *     consumer; the auth screens keep the `sparse` default, which is the
+ *     value tuned here.
  *   - `ReceiptPanel` — the till-paper slab, on `/login` ONLY.
  *
  * **The wordmark (Owner directive, added to 0006 mid-execution).** It was 21px
@@ -60,7 +63,7 @@
 
 import type { FormEvent, ReactNode } from 'react';
 import { appCopy } from '../copy/strings';
-import { GachBongGround } from './GachBongGround';
+import { GachBongGround } from '../components/GachBongGround';
 import { ReceiptPanel } from './ReceiptPanel';
 
 interface AuthScreenProps {
