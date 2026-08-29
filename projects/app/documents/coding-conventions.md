@@ -32,7 +32,18 @@ No hardcoded user-facing copy scattered through components — keep copy where i
 
 - Cover view logic and data wiring; report counts. No merge on red.
 - **Amount parsing and formatting get their own tests** — including negative amounts, zero, and malformed input.
-- **Scoped exception — the prototype track (hub tickets 0002, 0003, 0004).** Owner decision, 2026-08-22: that track ships without automated tests. Closing evidence there is a green build plus **observed dev-server behavior**, demonstrated and reported, not asserted. The rule above stands for everything else, and this exception expires with those three tickets.
+- **Standing exception — the prototype track.** Owner decision, 2026-08-22, **restated 2026-08-29**: while this client runs on seeded in-memory state, it ships without unit tests. It originally named hub tickets 0002/0003/0004 and said it expired with them; [0005](../../../management/backlog/0005-app-design-system-shadcn-theme-c.md), [0006](../../../management/backlog/0006-app-login-screen-staging.md) and [0007](../../../management/backlog/0007-app-gach-bong-ground-app-shell.md) invoked it after that, so it is restated as a rule with a condition rather than kept as a list of ticket numbers that only ever grows.
+
+  **Waiving unit tests raises the evidence bar; it does not lower it.** What the track actually settled into, and what is now required to close an `app` ticket under this exception:
+
+  - **Playwright, with counts, including the baseline** — "47/47 (45 + 2 new)", not "tests pass". A suite that only ever grows green hides the regression it should have caught.
+  - **Screenshots** of the behaviour claimed, per `CLAUDE.md`'s episode-1 evidence loop (`55:19`).
+  - **Behaviour demonstrated, never asserted.** [Bug 0001](../../../management/bugs/0001-ledger-filter-drops-keystrokes.md) was found by walking the loop, not by a suite; [0007](../../../management/backlog/0007-app-gach-bong-ground-app-shell.md) caught a scroll-anchor regression by A/B across three builds. Both are what this bar is for.
+  - **Amount parsing and formatting keep their tests regardless.** The rule above is not inside this exception — the money contract does not get a prototype discount.
+
+  **It expires when the client stops running on seeded mock state** — that is, when `app` first renders data from the real `api` ([backlog 0008](../../../management/backlog/0008-api-auth-signup-login-sessions.md) and the epic's phase 3). At that point the data layer becomes real, its failures become silent, and unit tests stop being redundant with a walkthrough. **Do not extend this exception past that line without the Owner.**
+
+  **It has never covered `api`.** `api/documents/coding-conventions.md` carries no exception, so [0001](../../../management/backlog/0001-api-ledger-foundation.md) and [0008](../../../management/backlog/0008-api-auth-signup-login-sessions.md) are tested normally.
 
 ## Contracts
 
@@ -40,4 +51,4 @@ No hardcoded user-facing copy scattered through components — keep copy where i
 
 The API's response shapes are the `api` agent's contract. Consume them; don't reshape them, don't patch around them client-side. Flag what you need to the PM.
 
-*Last updated: 2026-08-25 (stamp added; content reviewed against hub ADR 0004 — the multi-account auth model is settled law, see the boundary section in `architecture/01-overview.md`) — keep this stamp current in the same edit that changes content.*
+*Last updated: 2026-08-29 (PM, Owner's call: §Tests' prototype exception restated as a standing rule with an expiry condition — it named three tickets and said it expired with them, while 0005/0006/0007 went on invoking it, and the bar the track actually holds itself to (Playwright with baseline counts, screenshots, behaviour demonstrated) was written down nowhere. Earlier: 2026-08-25 — stamp added; content reviewed against hub ADR 0004, the multi-account auth model is settled law, see the boundary section in `architecture/01-overview.md`) — keep this stamp current in the same edit that changes content.*
