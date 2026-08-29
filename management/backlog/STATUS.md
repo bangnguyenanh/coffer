@@ -18,7 +18,7 @@
 
 | ID | Title | Waiting on | Detail |
 |----|-------|-----------|--------|
-| [0006](0006-app-login-screen-staging.md) | Login screen — gạch bông ground, receipt panel, wordmark | Owner — commit gate **+ one doc call** | Done 2026-08-28. Build green, Playwright 45/45 (41 baseline + 4 new), four screenshots. `LoginView`/`SignupView` and all of `src/auth/`'s logic byte-identical, so ep2's rewrite is untouched. **The doc call:** `app/documents/coding-conventions.md` §Tests scopes the no-unit-test exception to 0002/0003/0004 and says it expires with them — 0006 invoked it anyway. Name 0006, or restate it as a standing prototype-track rule |
+| — | — | — | — |
 
 ## Epics
 
@@ -44,6 +44,8 @@ Open product questions that gate work beyond this Epic — import mechanism, bud
 
 | ID | Title | Closed | Detail |
 |----|-------|--------|--------|
+| [0007](0007-app-gach-bong-ground-app-shell.md) | Gạch bông ground carried into the signed-in app | 2026-08-29 | Done 2026-08-28; Owner's commit gate cleared 2026-08-29 — committed as `ba7ffdc`. Build green, Playwright 47/47, five screenshots, PM re-verified independently. One motif, one file, two opacities via a `density` prop — 3% in the shell, 5% on auth. **Found and fixed a real regression:** the decoration became Chromium's scroll anchor and fought `row-anchor.ts`; `[overflow-anchor:none]` is load-bearing, proven by A/B across three builds. |
+| [0006](0006-app-login-screen-staging.md) | Login screen — gạch bông ground, receipt panel, wordmark | 2026-08-29 | Done 2026-08-28; Owner's commit gate cleared 2026-08-29 — committed as `3a5045d`. Build green, Playwright 45/45, four screenshots. `LoginView`/`SignupView` and all of `src/auth/`'s logic byte-identical, so ep2's rewrite is untouched. **The doc call it raised is NOT closed with it** — the no-unit-test exception's scope is now an open question in [CANDIDATES](../decisions/CANDIDATES.md). |
 | [0003](0003-app-ui-prototype-mock-data.md) | Coffer web client — prototype core loop | 2026-08-27 | All six phases. Auth, ledger + filters, quick entry at 11 keystrokes, edit/delete with undo, the triage inbox at 2 keystrokes a batch, and the core loop walked end to end. Its phase-6 walkthrough is what broke [bug 0001](../bugs/0001-ledger-filter-drops-keystrokes.md) open. |
 | [0004](0004-app-prototype-accounts-transfers-insight.md) | Accounts, transfers, categories, month insight, dashboard | 2026-08-27 | All five phases. Balances derived not stored; transfers proved excluded from every spending figure; categories delete-reassigns; **theme C's month band**; dashboard as the landing route. **Owes the transfer ADR** before `api` migrates. |
 | [0005](0005-app-design-system-shadcn-theme-c.md) | Design system — shadcn/ui on theme C ("Ấm") | 2026-08-27 | All four phases; Playwright 4/4, build green, 11 keystrokes held, 105 amounts checked for a stray `+`. Owner's commit gate cleared same day — committed as `0625c31`. **Two reversible calls stand as committed** unless the Owner says otherwise: `money.ts` exports `CURRENCY_SYMBOL` for one `aria-hidden` ₫ (4 lines to revert, one consumer), and `playwright.config.ts` + `e2e/` live in the surface. The harness hole this ticket exposed is fixed in `88e55a7`. |

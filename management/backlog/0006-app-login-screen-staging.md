@@ -1,6 +1,6 @@
 # Backlog 0006: Login screen — gạch bông ground and the receipt panel
 
-**Status:** Awaiting Owner — commit gate
+**Status:** Closed — commit gate cleared 2026-08-29, committed as `3a5045d`
 **Priority:** Medium
 **Surfaces:** app
 **Opened:** 2026-08-28
@@ -103,7 +103,7 @@ The prototype track's exception applies: green build plus demonstrated behaviour
 
 ## Outcome
 
-**Done 2026-08-28.** All four steps. Not committed — the Owner holds the gate.
+**Done 2026-08-28.** All four steps. **Committed 2026-08-29 as `3a5045d`** — the Owner cleared the gate. The doc call below is still open and now tracked in [CANDIDATES](../decisions/CANDIDATES.md).
 
 - **Files changed:** `src/auth/GachBongGround.tsx` (new), `src/auth/ReceiptPanel.tsx`
   (new), `src/auth/AuthScreen.tsx:37-100` (layout) and `:91-97` (wordmark),
