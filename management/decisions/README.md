@@ -39,3 +39,6 @@ What becomes easier. What becomes harder. What we'll need to watch.
 | [0002](0002-product-name-coffer.md) | The product is called Coffer | 2026-08-22 |
 | [0003](0003-currency-vnd-single-exponent-zero.md) | Single-currency VND; exponent 0, so `1234` is ₫1.234 | 2026-08-22 |
 | [0004](0004-multi-user-tenant-scoped-from-day-one.md) | Multi-user product; `user_id` on every table and every query, from the first migration | 2026-08-25 |
+| [0005](0005-design-system-shadcn-theme-c.md) | Design system — shadcn/ui on theme C ("Ấm") | 2026-08-27 |
+| [0006](0006-transfers-linked-pair-invariant-in-db.md) | Transfers are a linked pair; the invariant lives in the database | 2026-08-29 |
+| [0007](0007-real-auth-open-signup-hosted-later.md) | Real bcrypt auth with open signup and server-side sessions; hosting stays a separate `ops` gate | 2026-08-29 |
